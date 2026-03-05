@@ -1,0 +1,10 @@
+^C:\USERS\ABHIG\DOWNLOADS\VULKAN_RT\BUILD\CMAKEFILES\70CD0678D39D28063EE6BF06698E16F0\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/abhig/Downloads/Vulkan_RT -BC:/Users/abhig/Downloads/Vulkan_RT/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/abhig/Downloads/Vulkan_RT/build/VULKAN_RT.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

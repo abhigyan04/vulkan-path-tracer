@@ -1,0 +1,10 @@
+^C:\USERS\ABHIG\DOWNLOADS\VULKAN_RT\BUILD\_DEPS\GLFW-SUBBUILD\CMAKEFILES\B49DCB7D295EFA3DE58A00916B6A1463\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/abhig/Downloads/Vulkan_RT/build/_deps/glfw-subbuild -BC:/Users/abhig/Downloads/Vulkan_RT/build/_deps/glfw-subbuild --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/abhig/Downloads/Vulkan_RT/build/_deps/glfw-subbuild/glfw-populate.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

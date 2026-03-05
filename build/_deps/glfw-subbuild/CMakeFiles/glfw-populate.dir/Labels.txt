@@ -1,0 +1,14 @@
+# Target labels
+ glfw-populate
+# Source files and their labels
+C:/Users/abhig/Downloads/Vulkan_RT/build/_deps/glfw-subbuild/CMakeFiles/glfw-populate
+C:/Users/abhig/Downloads/Vulkan_RT/build/_deps/glfw-subbuild/CMakeFiles/b49dcb7d295efa3de58a00916b6a1463/glfw-populate.rule
+C:/Users/abhig/Downloads/Vulkan_RT/build/_deps/glfw-subbuild/CMakeFiles/931875539f22ac3c8ef05cb0dd505b67/glfw-populate-complete.rule
+C:/Users/abhig/Downloads/Vulkan_RT/build/_deps/glfw-subbuild/CMakeFiles/82b8c12d7972bd70e98d468dfb4163ed/glfw-populate-build.rule
+C:/Users/abhig/Downloads/Vulkan_RT/build/_deps/glfw-subbuild/CMakeFiles/82b8c12d7972bd70e98d468dfb4163ed/glfw-populate-configure.rule
+C:/Users/abhig/Downloads/Vulkan_RT/build/_deps/glfw-subbuild/CMakeFiles/82b8c12d7972bd70e98d468dfb4163ed/glfw-populate-download.rule
+C:/Users/abhig/Downloads/Vulkan_RT/build/_deps/glfw-subbuild/CMakeFiles/82b8c12d7972bd70e98d468dfb4163ed/glfw-populate-install.rule
+C:/Users/abhig/Downloads/Vulkan_RT/build/_deps/glfw-subbuild/CMakeFiles/82b8c12d7972bd70e98d468dfb4163ed/glfw-populate-mkdir.rule
+C:/Users/abhig/Downloads/Vulkan_RT/build/_deps/glfw-subbuild/CMakeFiles/82b8c12d7972bd70e98d468dfb4163ed/glfw-populate-patch.rule
+C:/Users/abhig/Downloads/Vulkan_RT/build/_deps/glfw-subbuild/CMakeFiles/82b8c12d7972bd70e98d468dfb4163ed/glfw-populate-test.rule
+C:/Users/abhig/Downloads/Vulkan_RT/build/_deps/glfw-subbuild/CMakeFiles/82b8c12d7972bd70e98d468dfb4163ed/glfw-populate-update.rule

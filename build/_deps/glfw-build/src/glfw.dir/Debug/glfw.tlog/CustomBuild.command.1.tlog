@@ -1,0 +1,10 @@
+^C:\USERS\ABHIG\DOWNLOADS\VULKAN_RT\BUILD\_DEPS\GLFW-SRC\SRC\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/abhig/Downloads/Vulkan_RT -BC:/Users/abhig/Downloads/Vulkan_RT/build --check-stamp-file C:/Users/abhig/Downloads/Vulkan_RT/build/_deps/glfw-build/src/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
