@@ -1533,7 +1533,7 @@ int main(){
     pipelineInfo.pStages = shaderStages;
     pipelineInfo.groupCount = (uint32_t)std::size(shaderGroups);
     pipelineInfo.pGroups = shaderGroups;
-    pipelineInfo.maxPipelineRayRecursionDepth = 1;
+    pipelineInfo.maxPipelineRayRecursionDepth = 2;
     pipelineInfo.layout = pipelineLayout;
 
     if (vkCreateRayTracingPipelinesKHR(device, VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &rayTracingPipeline) != VK_SUCCESS) {

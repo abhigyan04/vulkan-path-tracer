@@ -13,8 +13,10 @@ layout(set=0, binding=2) uniform Camera
 } camera;
 
 layout(location = 0) rayPayloadEXT vec3 payload;
+layout(location = 1) rayPayloadEXT vec3 secondaryPayload;
 
-void main() {
+void main()
+{
     ivec2 pix = ivec2(gl_LaunchIDEXT.xy);
     ivec2 size = ivec2(gl_LaunchSizeEXT.xy);
 
