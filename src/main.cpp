@@ -8,9 +8,20 @@
 #include <algorithm>
 #include <array>
 #include <fstream>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/trigonometric.hpp>
+#include <glm/ext/quaternion_geometric.hpp>
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
+
+float yaw   = 90.0f;
+float pitch = 0.0f;
+
+double lastX = 0.0;
+double lastY = 0.0;
+
+bool firstMouse = true;
 
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
@@ -321,6 +332,44 @@ void copyBuffer(
     vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
+//Implement camera rotation based on mouse movement
+void mouseCallback(GLFWwindow* window, double xpos, double ypos)
+{
+    if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) != GLFW_PRESS)
+    {
+        firstMouse = true;
+        return;
+    }
+
+    float sensitivity = 0.1f;
+
+    if(firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xOffset = xpos - lastX;
+    float yOffset = lastY - ypos;
+
+    lastX = xpos;
+    lastY = ypos;
+
+    xOffset *= sensitivity;
+    yOffset *= sensitivity;
+
+    yaw += xOffset;
+    pitch += yOffset;
+
+    if(pitch > 89.0f)
+        pitch = 89.0f;
+    
+    if(pitch < -89.0f)
+        pitch = -89.0f;
+    
+}
+
 
 int main(){
     try {
@@ -331,6 +380,9 @@ int main(){
 
     GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan RT", nullptr, nullptr);
 
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+    glfwSetCursorPosCallback(window, mouseCallback);
 
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -934,6 +986,24 @@ int main(){
 
     uint32_t currentFrame = 0;
 
+    //Camera
+    struct Camera
+    {
+        glm::vec3 position;
+        float pad1;
+
+        glm::vec3 forward;
+        float pad2;
+
+        glm::vec3 right;
+        float pad3;
+
+        glm::vec3 up;
+        float pad4;
+
+        float fov;
+    };
+
     //Triangle vertex buffer
     struct Vertex {
         float pos[3];
@@ -982,6 +1052,33 @@ int main(){
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         vertexBuffer,
         vertexBufferMemory);
+
+    //Camera setup
+    VkBuffer cameraBuffer;
+    VkDeviceMemory cameraBufferMemory;
+
+    createBuffer(
+        device,
+        physicalDevice,
+        sizeof(Camera),
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        cameraBuffer,
+        cameraBufferMemory
+    );
+
+    Camera camera;
+
+    camera.position = glm::vec3(0,0,-3);
+    camera.forward  = glm::vec3(0,0,1);
+    camera.right    = glm::vec3(1,0,0);
+    camera.up       = glm::vec3(0,1,0);
+    camera.fov      = glm::radians(45.0);
+
+    void* cameraData;
+    vkMapMemory(device, cameraBufferMemory, 0, sizeof(Camera), 0, &cameraData);
+    memcpy(cameraData, &camera, sizeof(Camera));
+    vkUnmapMemory(device, cameraBufferMemory);
 
     //Copy data from staging buffer to GPU buffer
     copyBuffer(device, commandPool, graphicsQueue, stagingBuffer, vertexBuffer, bufferSize);
@@ -1321,7 +1418,13 @@ int main(){
     imgBinding.descriptorCount = 1;
     imgBinding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 
-    std::array<VkDescriptorSetLayoutBinding, 2> bindings = { asBinding, imgBinding };
+    VkDescriptorSetLayoutBinding cameraBufferBinding{};
+    cameraBufferBinding.binding = 2;
+    cameraBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    cameraBufferBinding.descriptorCount = 1;
+    cameraBufferBinding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
+
+    std::array<VkDescriptorSetLayoutBinding, 3> bindings = { asBinding, imgBinding, cameraBufferBinding };
 
     VkDescriptorSetLayoutCreateInfo tlasLayoutInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
     tlasLayoutInfo.bindingCount = (uint32_t)bindings.size();
@@ -1333,9 +1436,10 @@ int main(){
     VkDescriptorPool tlasDescriptorPool;
     VkDescriptorSet tlasDescriptorSet;
 
-    std::array<VkDescriptorPoolSize, 2> poolSizes{};
+    std::array<VkDescriptorPoolSize, 3> poolSizes{};
     poolSizes[0] = { VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1 };
     poolSizes[1] = { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 };
+    poolSizes[2] = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 };
 
     VkDescriptorPoolCreateInfo poolInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
     poolInfo.maxSets = 1;
@@ -1615,7 +1719,20 @@ int main(){
     imgWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
     imgWrite.pImageInfo = &outImageInfo;
 
-    std::array<VkWriteDescriptorSet, 2> writes = { asWrite, imgWrite };
+    VkDescriptorBufferInfo cameraBufferInfo{};
+    cameraBufferInfo.buffer = cameraBuffer;
+    cameraBufferInfo.offset = 0;
+    cameraBufferInfo.range = sizeof(Camera);
+
+     VkWriteDescriptorSet cameraDescriptorWrite{};
+    cameraDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    cameraDescriptorWrite.dstSet = tlasDescriptorSet;
+    cameraDescriptorWrite.dstBinding = 2;
+    cameraDescriptorWrite.descriptorCount = 1;
+    cameraDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    cameraDescriptorWrite.pBufferInfo = &cameraBufferInfo;
+
+    std::array<VkWriteDescriptorSet, 3> writes = { asWrite, imgWrite, cameraDescriptorWrite };
     vkUpdateDescriptorSets(device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
 
     //Record Command Buffers
@@ -1781,6 +1898,38 @@ int main(){
         VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
         VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
 
+        float speed = 0.005f;
+
+        if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            camera.position += camera.forward * speed;
+        if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            camera.position -= camera.forward * speed;
+        if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            camera.position -= camera.right * speed;
+        if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            camera.position += camera.right * speed;
+        if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+            camera.position -= camera.up * speed;
+        if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+            camera.position += camera.up * speed;
+
+        glm::vec3 direction;
+
+        direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        direction.y = sin(glm::radians(pitch));
+        direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+
+        camera.forward = glm::normalize(direction);
+        camera.right = glm::normalize(glm::cross(camera.forward, glm::vec3(0, 1, 0)));
+        camera.up = glm::normalize(glm::cross(camera.right, camera.forward));
+
+        // std::cout << "Camera Position: " << camera.position.x << ", " << camera.position.y << ", " << camera.position.z << "\n";
+
+        void* camData;
+        vkMapMemory(device, cameraBufferMemory, 0, sizeof(Camera), 0, &camData);
+        memcpy(camData, &camera, sizeof(Camera));
+        vkUnmapMemory(device, cameraBufferMemory);
+
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.waitSemaphoreCount = 1;
@@ -1876,6 +2025,8 @@ int main(){
     vkFreeMemory(device, tlasMemory, nullptr);
     vkDestroyBuffer(device, accelBuffer, nullptr);
     vkFreeMemory(device, accelBufferMemory, nullptr);
+    vkDestroyBuffer(device, cameraBuffer, nullptr);
+    vkFreeMemory(device, cameraBufferMemory, nullptr);
     // for(auto framebuffer : swapChainFramebuffers) {
     //     vkDestroyFramebuffer(device, framebuffer, nullptr);
     // }
