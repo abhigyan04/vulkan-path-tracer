@@ -1010,9 +1010,20 @@ int main(){
     };
 
     std::vector<Vertex> vertices = {
+        //Main Triangle
         {{-1.0f, -1.0f, 0.0f}},
         {{1.0f, -1.0f, 0.0f}},
-        {{0.0f, 1.0f, 0.0f}}
+        {{0.0f, 1.0f, 0.0f}},
+
+        //Floor Triangle 1
+        {{-6.0f, -1.0f, 6.0f}},
+        {{6.0f, -1.0f, 6.0f}},
+        {{-6.0f, -1.0f, -6.0f}},
+
+        //Floor Triangle 2
+        {{6.0f, -1.0f, 6.0f}},
+        {{6.0f, -1.0f, -6.0f}},
+        {{-6.0f, -1.0f, -6.0f}}
     };
 
     //Create staging buffer
@@ -1099,7 +1110,7 @@ int main(){
     geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
     geometry.geometry.triangles.vertexData.deviceAddress = vertexAddress;
     geometry.geometry.triangles.vertexStride = sizeof(Vertex);
-    geometry.geometry.triangles.maxVertex = 3;
+    geometry.geometry.triangles.maxVertex = 8; // 9 vertices total, indexed from 0
     geometry.geometry.triangles.indexType = VK_INDEX_TYPE_NONE_KHR;
     geometry.geometry.triangles.transformData.deviceAddress = 0;
 
@@ -1112,7 +1123,7 @@ int main(){
     buildInfo.pGeometries = &geometry;
     buildInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
 
-    uint32_t primitiveCount = 1; // One triangle
+    uint32_t primitiveCount = 3; // Three triangles
 
     VkAccelerationStructureBuildSizesInfoKHR sizeInfo{};
     sizeInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;

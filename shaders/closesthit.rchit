@@ -10,14 +10,43 @@ hitAttributeEXT vec2 attributes;
 
 void main()
 {
-    vec3 A = vec3(-1.0, -1.0, 0.0);
-    vec3 B = vec3(1.0, -1.0, 0.0);
-    vec3 C = vec3(0.0, 1.0, 0.0);
+    vec3 normal;
+    vec3 baseColor;
+    float reflectivity;
 
-    vec3 edge1 = B- A;
-    vec3 edge2 = C - A;
+    if(gl_PrimitiveID == 0)
+    {
+        //Main Triangle
+        vec3 A = vec3(-1.0, -1.0, 0.0);
+        vec3 B = vec3(1.0, -1.0, 0.0);
+        vec3 C = vec3(0.0, 1.0, 0.0);
 
-    vec3 normal = normalize(cross(edge1, edge2));
+        vec3 edge1 = B- A;
+        vec3 edge2 = C - A;
+
+        normal = normalize(cross(edge1, edge2));
+        baseColor = vec3(1.0, 0.2, 0.2);
+        reflectivity = 0.75;
+    }
+    else
+    {
+        //Floor Triangle
+        vec3 A = vec3(-5.0, -1.0, 5.0);
+        vec3 B = vec3(5.0, -1.0, 5.0);
+        vec3 C = vec3(0.0, -1.0, -5.0);
+
+        vec3 edge1 = B - A;
+        vec3 edge2 = C - A;
+
+        //normal = normalize(cross(edge1, edge2));
+        normal = vec3(0.0, 1.0, 0.0);
+        baseColor = vec3(0.7, 0.7, 0.7);
+        reflectivity = 0.35;
+    }
+
+    vec3 lightDirection = normalize(vec3(1.0, 1.0, 1.0));
+
+    float NdotL = max(dot(normal, lightDirection), 0.0);
 
     vec3 hitPosition = gl_WorldRayOriginEXT + gl_HitTEXT * gl_WorldRayDirectionEXT;
 
@@ -34,14 +63,8 @@ void main()
         0.001,
         reflectedDirection,
         10000.0,
-        0
+        1
     );
-
-    //vec3 lightDirection = normalize(vec3(1.0, 1.0, 1.0));
-
-    //float NdotL = max(dot(normal, lightDirection), 0.0);
-
-    //vec3 baseColor = vec3(1.0, 0.3, 0.3);
 
     float u = attributes.x;
     float v = attributes.y;
@@ -49,5 +72,7 @@ void main()
 
     vec3 barycentricColor = vec3(w, u, v);
 
-    payload = 0.25 * barycentricColor + 0.75 * secondaryPayload;
+    vec3 diffuse = baseColor * NdotL;
+
+    payload = mix(diffuse, secondaryPayload, reflectivity);
 }
