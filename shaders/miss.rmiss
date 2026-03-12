@@ -1,12 +1,9 @@
 #version 460
 #extension GL_EXT_ray_tracing : require
 
-layout(location = 0) rayPayloadInEXT vec3 payload;
-layout(location = 1) rayPayloadEXT vec3 secondaryPayload;
+layout(location = 1) rayPayloadInEXT vec3 secondaryPayload;
 
 void main()
 {
-    vec3 d = normalize(gl_WorldRayDirectionEXT);
-    float t = 0.5 * (d.y + 1.0);
-    payload = mix(vec3(1.0, 1.0, 1.0), vec3(0.4, 0.6, 1.0), t);
+    secondaryPayload = vec3(0.1, 0.1, 0.2);
 }

@@ -14,6 +14,7 @@ layout(set=0, binding=2) uniform Camera
 
 layout(location = 0) rayPayloadEXT vec3 payload;
 layout(location = 1) rayPayloadEXT vec3 secondaryPayload;
+layout(location = 2) rayPayloadEXT float shadowPayload;
 
 void main()
 {
@@ -23,11 +24,11 @@ void main()
     vec2 uv = (vec2(pix) + vec2(0.5)) / vec2(size);
     vec2 screen = uv * 2.0 - 1.0;
 
-    float aspect = size.x / size.y;
+    float aspect = float(size.x) / float(size.y);
     screen.x *= aspect;
 
-    float fov = radians(45.0);
-    float scale = tan(fov * 0.5);
+    //float fov = radians(45.0);
+    float scale = tan(radians(camera.fov) * 0.5);
 
     vec3 origin = camera.position;
     vec3 dir = camera.forward + screen.x * camera.right - screen.y * camera.up;

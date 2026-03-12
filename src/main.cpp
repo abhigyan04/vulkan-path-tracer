@@ -23,6 +23,8 @@ double lastY = 0.0;
 
 bool firstMouse = true;
 
+const int MAX_FRAMES_IN_FLIGHT = 2;
+
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
@@ -543,55 +545,6 @@ int main(){
 
     std::cout << "Command pool created successfully!" << std::endl;
 
-    //Descriptor Set Layout for storage image
-    // VkDescriptorSetLayout descriptorSetLayout;
-
-    // VkDescriptorSetLayoutBinding storageImageBinding{};
-    // storageImageBinding.binding = 0;
-    // storageImageBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-    // storageImageBinding.descriptorCount = 1;
-    // storageImageBinding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
-
-    // VkDescriptorSetLayoutCreateInfo layoutInfo{};
-    // layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    // layoutInfo.bindingCount = 1;
-    // layoutInfo.pBindings = &storageImageBinding;
-
-    // if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
-    //     std::cerr << "Failed to create descriptor set layout!" << std::endl;
-    //     return -1;
-    // }
-
-    //Descriptor Pool and Descriptor Set for storage image
-    // VkDescriptorPool descriptorPool;
-    // VkDescriptorSet descriptorSet;
-
-    // VkDescriptorPoolSize poolSize{};
-    // poolSize.type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-    // poolSize.descriptorCount = 1;
-
-    // VkDescriptorPoolCreateInfo descriptorPoolInfo{};
-    // descriptorPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    // descriptorPoolInfo.maxSets = 1;
-    // descriptorPoolInfo.poolSizeCount = 1;
-    // descriptorPoolInfo.pPoolSizes = &poolSize;
-
-    // if (vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
-    //     std::cerr << "Failed to create descriptor pool!" << std::endl;
-    //     return -1;
-    // }
-
-    // VkDescriptorSetAllocateInfo descriptorAllocInfo{};
-    // descriptorAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    // descriptorAllocInfo.descriptorPool = descriptorPool;
-    // descriptorAllocInfo.descriptorSetCount = 1;
-    // descriptorAllocInfo.pSetLayouts = &descriptorSetLayout;
-
-    // if (vkAllocateDescriptorSets(device, &descriptorAllocInfo, &descriptorSet) != VK_SUCCESS) {
-    //     std::cerr << "Failed to allocate descriptor set!" << std::endl;
-    //     return -1;
-    // }
-
     //Create Swap Chain
     SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice, surface);
 
@@ -767,22 +720,6 @@ int main(){
 
     vkFreeCommandBuffers(device, commandPool, 1, &tempCmdBuffer);
 
-    //Update descriptor to point at rtImageView
-    // VkDescriptorImageInfo descriptorImageInfo{};
-    // descriptorImageInfo.imageView = rtImageView;
-    // descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-
-    // VkWriteDescriptorSet descriptorWrite{};
-    // descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    // descriptorWrite.dstSet = descriptorSet;
-    // descriptorWrite.dstBinding = 0;
-    // descriptorWrite.dstArrayElement = 0;
-    // descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-    // descriptorWrite.descriptorCount = 1;
-    // descriptorWrite.pImageInfo = &descriptorImageInfo;
-
-    // vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
-
     //Create Image Views for Swap Chain Images
     uint32_t swapChainImageCount;
     vkGetSwapchainImagesKHR(device, swapChain, &swapChainImageCount, nullptr);
@@ -873,78 +810,9 @@ int main(){
 
     vkFreeCommandBuffers(device, commandPool, 1, &tempSwapCmdBuffer);
 
-    //Create Render Pass
-    // VkRenderPass renderPass;
-
-    // VkAttachmentDescription colorAttachment{};
-    // colorAttachment.format = surfaceFormat.format;
-    // colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    // colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    // colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    // colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    // colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    // colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    // colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    // VkAttachmentReference colorAttachmentRef{};
-    // colorAttachmentRef.attachment = 0;
-    // colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    // VkSubpassDescription subpass{};
-    // subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    // subpass.colorAttachmentCount = 1;
-    // subpass.pColorAttachments = &colorAttachmentRef;
-
-    // VkSubpassDependency dependency{};
-    // dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    // dependency.dstSubpass = 0;
-    // dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    // dependency.srcAccessMask = 0;
-    // dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    // dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    // VkRenderPassCreateInfo renderPassInfo{};
-    // renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    // renderPassInfo.attachmentCount = 1;
-    // renderPassInfo.pAttachments = &colorAttachment;
-    // renderPassInfo.subpassCount = 1;
-    // renderPassInfo.pSubpasses = &subpass;
-    // renderPassInfo.dependencyCount = 1;
-    // renderPassInfo.pDependencies = &dependency;
-
-    // if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-    //     std::cerr << "Failed to create render pass!" << std::endl;
-    //     return -1;
-    // }
-
-    // std::cout << "Render pass created successfully!" << std::endl;
-
-    //Create Framebuffers
-    // std::vector<VkFramebuffer> swapChainFramebuffers(swapChainImageViews.size());
-
-    // for(size_t i = 0; i < swapChainImageViews.size(); i++) {
-    //     VkImageView attachments[] = {swapChainImageViews[i]};
-
-    //     VkFramebufferCreateInfo framebufferInfo{};
-    //     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    //     framebufferInfo.renderPass = renderPass;
-    //     framebufferInfo.attachmentCount = 1;
-    //     framebufferInfo.pAttachments = attachments;
-    //     framebufferInfo.width = extent.width;
-    //     framebufferInfo.height = extent.height;
-    //     framebufferInfo.layers = 1;
-
-    //     if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
-    //         std::cerr << "Failed to create framebuffer!" << std::endl;
-    //         return -1;
-    //     }
-    // }
-
-    // std::cout << "Framebuffers created successfully!" << std::endl;
-
     //Create command buffers
 
-    std::vector<VkCommandBuffer> commandBuffers(swapChainImages.size());
+    std::vector<VkCommandBuffer> commandBuffers(MAX_FRAMES_IN_FLIGHT);
 
     VkCommandBufferAllocateInfo commandBufferAllocInfo{};
     commandBufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -960,7 +828,6 @@ int main(){
     std::cout << "Command buffers created successfully!" << std::endl;
 
     //Create Synchronization Objects
-    const int MAX_FRAMES_IN_FLIGHT = 2;
 
     std::vector<VkSemaphore> imageAvailableSemaphores(MAX_FRAMES_IN_FLIGHT);
     std::vector<VkSemaphore> renderFinishedSemaphores(MAX_FRAMES_IN_FLIGHT);
@@ -1489,13 +1356,15 @@ int main(){
     auto raygenCode = readFile("shaders/raygen.spv");
     auto misscode = readFile("shaders/miss.spv");
     auto chitcode = readFile("shaders/chit.spv");
+    auto shadowmisscode = readFile("shaders/shadowmiss.spv");
     VkShaderModule raygenShaderModule = createShaderModule(device, raygenCode);
     VkShaderModule missShaderModule = createShaderModule(device, misscode);
     VkShaderModule chitShaderModule = createShaderModule(device, chitcode);
+    VkShaderModule shadowmissShaderModule = createShaderModule(device, shadowmisscode);
 
     VkPipeline rayTracingPipeline;
 
-    VkPipelineShaderStageCreateInfo shaderStages[3]{};
+    VkPipelineShaderStageCreateInfo shaderStages[4]{};
 
     shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStages[0].stage = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
@@ -1512,7 +1381,12 @@ int main(){
     shaderStages[2].module = chitShaderModule;
     shaderStages[2].pName = "main";
 
-    VkRayTracingShaderGroupCreateInfoKHR shaderGroups[3]{};
+    shaderStages[3].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    shaderStages[3].stage = VK_SHADER_STAGE_MISS_BIT_KHR;
+    shaderStages[3].module = shadowmissShaderModule;
+    shaderStages[3].pName = "main";
+
+    VkRayTracingShaderGroupCreateInfoKHR shaderGroups[4]{};
 
     //Group 0: raygen
     shaderGroups[0].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
@@ -1538,6 +1412,14 @@ int main(){
     shaderGroups[2].anyHitShader = VK_SHADER_UNUSED_KHR;
     shaderGroups[2].intersectionShader = VK_SHADER_UNUSED_KHR;
 
+    //Group 3: shadow miss
+    shaderGroups[3].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+    shaderGroups[3].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+    shaderGroups[3].generalShader = 3; // Index of shadow miss shader in shaderStages
+    shaderGroups[3].closestHitShader = VK_SHADER_UNUSED_KHR;
+    shaderGroups[3].anyHitShader = VK_SHADER_UNUSED_KHR;
+    shaderGroups[3].intersectionShader = VK_SHADER_UNUSED_KHR;
+
     VkRayTracingPipelineCreateInfoKHR pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
     pipelineInfo.stageCount = (uint32_t)std::size(shaderStages);
@@ -1557,6 +1439,7 @@ int main(){
     vkDestroyShaderModule(device, raygenShaderModule, nullptr);
     vkDestroyShaderModule(device, missShaderModule, nullptr);
     vkDestroyShaderModule(device, chitShaderModule, nullptr);
+    vkDestroyShaderModule(device, shadowmissShaderModule, nullptr);
 
     //Build the SBT
 
@@ -1575,7 +1458,7 @@ int main(){
 
     // Each region start must be aligned to base alignment
     VkDeviceSize raygenRegionSize = alignUp(recordStride, baseAlign);
-    VkDeviceSize missRegionSize   = alignUp(recordStride, baseAlign);
+    VkDeviceSize missRegionSize   = alignUp(recordStride * 2, baseAlign);
     VkDeviceSize hitRegionSize    = alignUp(recordStride, baseAlign);
 
     VkDeviceSize sbtSize = raygenRegionSize + missRegionSize + hitRegionSize;
@@ -1616,8 +1499,13 @@ int main(){
        handleSize);
 
     // group 1 = miss
-    memcpy(mapped + raygenRegionSize,
+    memcpy(mapped + raygenRegionSize + 0 * recordStride,
        handles.data() + 1 * handleSize,
+       handleSize);
+    
+    // group 4 = shadow miss
+    memcpy(mapped + raygenRegionSize + 1 * recordStride,
+       handles.data() + 3 * handleSize,
        handleSize);
 
     // group 2 = hit
@@ -1631,14 +1519,14 @@ int main(){
     VkDeviceAddress sbtAddress = getBufferDeviceAddress(device, sbtBuffer);
 
     VkStridedDeviceAddressRegionKHR raygenSBT{};
-    raygenSBT.deviceAddress = sbtAddress + 0;
+    raygenSBT.deviceAddress = sbtAddress;
     raygenSBT.stride = recordStride;
     raygenSBT.size   = recordStride;
     
     VkStridedDeviceAddressRegionKHR missSBT{};
     missSBT.deviceAddress = sbtAddress + raygenRegionSize;
     missSBT.stride = recordStride;
-    missSBT.size   = recordStride;
+    missSBT.size   = recordStride * 2;
 
     VkStridedDeviceAddressRegionKHR hitSBT{};
     hitSBT.deviceAddress = sbtAddress + raygenRegionSize + missRegionSize;
@@ -1647,70 +1535,9 @@ int main(){
 
     VkStridedDeviceAddressRegionKHR callableSBT{};
 
-    // const uint32_t groupCount = pipelineInfo.groupCount;
-
-    // uint32_t groupHandleSize = rayTracingPipelineProperties.shaderGroupHandleSize;
-    // uint32_t handleSizeAligned =
-    //     (groupHandleSize + rayTracingPipelineProperties.shaderGroupHandleAlignment - 1) &
-    //     ~(rayTracingPipelineProperties.shaderGroupHandleAlignment - 1);
-
-    // VkDeviceSize sbtSize = groupCount * (VkDeviceSize)handleSizeAligned;
-
-    // std::vector<uint8_t> handles(groupCount * groupHandleSize);
-
-    // if (vkGetRayTracingShaderGroupHandlesKHR(
-    //     device,
-    //     rayTracingPipeline,
-    //     0,
-    //     groupCount,
-    //     handles.size(),
-    //     handles.data()) != VK_SUCCESS)
-    // {
-    //     std::cerr << "Failed to get ray tracing shader group handles!" << std::endl;
-    //     return -1;
-    // }
-
-    // VkBuffer sbtBuffer;
-    // VkDeviceMemory sbtBufferMemory;
-
-    // createBuffer(device, physicalDevice, sbtSize,
-    //     VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR |
-    //     VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-    //     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-    //     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-    //     sbtBuffer, sbtBufferMemory);
-
-    // uint8_t* mapped = nullptr;
-    // vkMapMemory(device, sbtBufferMemory, 0, sbtSize, 0, (void**)&mapped);
-
-    // for (uint32_t g = 0 ; g < groupCount ; g++) {
-    //     memcpy(mapped + g * handleSizeAligned, handles.data() + g * groupHandleSize, groupHandleSize);
-    // }
-
-    // vkUnmapMemory(device, sbtBufferMemory);
-
-    // VkDeviceAddress sbtAddress = getBufferDeviceAddress(device, sbtBuffer);
-
-    // //Create SBT buffer region
-    // VkStridedDeviceAddressRegionKHR raygenSBT{};
-    // raygenSBT.deviceAddress = sbtAddress + 0 * handleSizeAligned;
-    // raygenSBT.stride = handleSizeAligned;
-    // raygenSBT.size = handleSizeAligned;
-
-    // VkStridedDeviceAddressRegionKHR missSBT{};
-    // missSBT.deviceAddress = sbtAddress + 1 * handleSizeAligned;
-    // missSBT.stride = handleSizeAligned;
-    // missSBT.size = handleSizeAligned;
-
-    // VkStridedDeviceAddressRegionKHR hitSBT{};
-    // hitSBT.deviceAddress = sbtAddress + 2 * handleSizeAligned;
-    // hitSBT.stride = handleSizeAligned;
-    // hitSBT.size = handleSizeAligned;
-
-    // VkStridedDeviceAddressRegionKHR callableSBT{};
-    // callableSBT.deviceAddress = 0;
-    // callableSBT.stride = 0;
-    // callableSBT.size = 0;
+    callableSBT.deviceAddress = 0;
+    callableSBT.stride = 0;
+    callableSBT.size = 0;
 
     VkWriteDescriptorSet asWrite{ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
     asWrite.dstSet = tlasDescriptorSet;
@@ -1858,29 +1685,9 @@ int main(){
         );
 
         vkEndCommandBuffer(commandBuffer);
-
-        // VkClearValue clearColor = {};
-        // clearColor.color = {{1.05f, 0.05f, 0.10f, 1.0f}};
-
-        // VkRenderPassBeginInfo renderPassInfo{};
-        // renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        // renderPassInfo.renderPass = renderPass;
-        // renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
-        // renderPassInfo.renderArea.offset = {0, 0};
-        // renderPassInfo.renderArea.extent = extent;
-
-        // renderPassInfo.clearValueCount = 1;
-        // renderPassInfo.pClearValues = &clearColor;
-
-        // vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-        // No drawing commands yet
-        // vkCmdEndRenderPass(commandBuffer);
-
-        // if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-        //     std::cerr << "Failed to record command buffer!" << std::endl;
-        //     return;
-        // }
     };
+
+    std::vector<VkFence> imagesInFlight(swapChainImages.size(), VK_NULL_HANDLE);
 
     //Main Loop
      while (!glfwWindowShouldClose(window)) {
@@ -1900,14 +1707,12 @@ int main(){
             continue;
         }
 
+        if(imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
+            vkWaitForFences(device, 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+        }
+
         vkResetFences(device, 1, &inFlightFences[currentFrame]);
         vkResetCommandBuffer(commandBuffers[currentFrame], 0);
-
-        recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
-
-        VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
-        VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-        VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
 
         float speed = 0.005f;
 
@@ -1941,6 +1746,12 @@ int main(){
         memcpy(camData, &camera, sizeof(Camera));
         vkUnmapMemory(device, cameraBufferMemory);
 
+        recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+
+        VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
+        VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_ALL_COMMANDS_BIT};
+        VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
+
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.waitSemaphoreCount = 1;
@@ -1951,9 +1762,14 @@ int main(){
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
-            std::cerr << "Failed to submit draw command buffer!" << std::endl;
+        VkResult submitResult = vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]);
+
+        if (submitResult != VK_SUCCESS) {
+            std::cerr << "vkQueueSubmit failed: " << submitResult << std::endl;
+            abort();
         }
+
+        imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
         VkPresentInfoKHR presentInfo{};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
