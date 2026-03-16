@@ -6,7 +6,10 @@
 
 struct Vertex {
     glm::vec3 position;
+    float pad1;
+
     glm::vec3 normal;
+    float pad2;
 };
 
 struct Mesh

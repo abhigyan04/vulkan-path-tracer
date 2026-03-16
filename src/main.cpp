@@ -886,7 +886,7 @@ int main(){
         device,
         physicalDevice,
         sizeof(Vertex) * mesh.vertices.size(),
-        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
+        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         vertexBuffer,
         vertexBufferMemory
@@ -1370,7 +1370,13 @@ int main(){
     cameraBufferBinding.descriptorCount = 1;
     cameraBufferBinding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 
-    std::array<VkDescriptorSetLayoutBinding, 3> bindings = { asBinding, imgBinding, cameraBufferBinding };
+    VkDescriptorSetLayoutBinding vertexBufferBinding{};
+    vertexBufferBinding.binding = 3;
+    vertexBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    vertexBufferBinding.descriptorCount = 1;
+    vertexBufferBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+
+    std::array<VkDescriptorSetLayoutBinding, 4> bindings = { asBinding, imgBinding, cameraBufferBinding, vertexBufferBinding };
 
     VkDescriptorSetLayoutCreateInfo tlasLayoutInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
     tlasLayoutInfo.bindingCount = (uint32_t)bindings.size();
@@ -1382,10 +1388,11 @@ int main(){
     VkDescriptorPool tlasDescriptorPool;
     VkDescriptorSet tlasDescriptorSet;
 
-    std::array<VkDescriptorPoolSize, 3> poolSizes{};
+    std::array<VkDescriptorPoolSize, 4> poolSizes{};
     poolSizes[0] = { VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1 };
     poolSizes[1] = { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 };
     poolSizes[2] = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 };
+    poolSizes[3] = { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 };
 
     VkDescriptorPoolCreateInfo poolInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
     poolInfo.maxSets = 1;
@@ -1630,7 +1637,7 @@ int main(){
     cameraBufferInfo.offset = 0;
     cameraBufferInfo.range = sizeof(Camera);
 
-     VkWriteDescriptorSet cameraDescriptorWrite{};
+    VkWriteDescriptorSet cameraDescriptorWrite{};
     cameraDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     cameraDescriptorWrite.dstSet = tlasDescriptorSet;
     cameraDescriptorWrite.dstBinding = 2;
@@ -1638,7 +1645,19 @@ int main(){
     cameraDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     cameraDescriptorWrite.pBufferInfo = &cameraBufferInfo;
 
-    std::array<VkWriteDescriptorSet, 3> writes = { asWrite, imgWrite, cameraDescriptorWrite };
+    VkDescriptorBufferInfo vertexBufferInfo{};
+    vertexBufferInfo.buffer = vertexBuffer;
+    vertexBufferInfo.offset = 0;
+    vertexBufferInfo.range = VK_WHOLE_SIZE;
+
+    VkWriteDescriptorSet vertexBufferWrite{ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+    vertexBufferWrite.dstSet = tlasDescriptorSet;
+    vertexBufferWrite.dstBinding = 3;
+    vertexBufferWrite.descriptorCount = 1;
+    vertexBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    vertexBufferWrite.pBufferInfo = &vertexBufferInfo;
+
+    std::array<VkWriteDescriptorSet, 4> writes = { asWrite, imgWrite, cameraDescriptorWrite, vertexBufferWrite };
     vkUpdateDescriptorSets(device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
 
     //Record Command Buffers
