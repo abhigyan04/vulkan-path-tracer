@@ -4,11 +4,25 @@
     <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\objLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\objLoader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\mesh.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="C:\Users\abhig\Downloads\Vulkan_RT\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{528C7626-E372-391E-9994-F95F01F17A37}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source Files">
       <UniqueIdentifier>{9DEFCCCB-4663-3CC2-9692-5DED140E1406}</UniqueIdentifier>
     </Filter>

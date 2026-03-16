@@ -25,10 +25,14 @@ FetchContent_MakeAvailable(glfw)
 
 add_executable(VULKAN_RT
     src/main.cpp
+    src/objLoader.cpp
+    src/objLoader.hpp
+    src/mesh.hpp
 )
 
 target_include_directories(VULKAN_RT PRIVATE
-    "${VULKAN_SDK}/Include"
+    "${VULKAN_SDK}/Include",
+    include
 )
 
 target_link_libraries(VULKAN_RT PRIVATE

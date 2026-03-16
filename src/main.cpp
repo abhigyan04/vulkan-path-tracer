@@ -12,6 +12,9 @@
 #include <glm/trigonometric.hpp>
 #include <glm/ext/quaternion_geometric.hpp>
 
+#include "tinyobjloader/tiny_obj_loader.h"
+#include "objLoader.hpp"
+
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
@@ -871,65 +874,127 @@ int main(){
         float fov;
     };
 
-    //Triangle vertex buffer
-    struct Vertex {
-        float pos[3];
-    };
+    //Load model
+    Mesh mesh = loadOBJ("assets/bunny.obj");
 
-    std::vector<Vertex> vertices = {
-        //Main Triangle
-        {{-1.0f, -1.0f, 0.0f}},
-        {{1.0f, -1.0f, 0.0f}},
-        {{0.0f, 1.0f, 0.0f}},
-
-        //Floor Triangle 1
-        {{-6.0f, -1.0f, 6.0f}},
-        {{6.0f, -1.0f, 6.0f}},
-        {{-6.0f, -1.0f, -6.0f}},
-
-        //Floor Triangle 2
-        {{6.0f, -1.0f, 6.0f}},
-        {{6.0f, -1.0f, -6.0f}},
-        {{-6.0f, -1.0f, -6.0f}}
-    };
-
-    //Create staging buffer
-    VkDeviceSize bufferSize = sizeof(Vertex) * vertices.size();
-    
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-
-    createBuffer(
-        device,
-        physicalDevice,
-        bufferSize,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        stagingBuffer,
-        stagingBufferMemory
-    );
-
-    //Copy vertex data to staging buffer
-    void* data;
-    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, vertices.data(), (size_t)bufferSize);
-    vkUnmapMemory(device, stagingBufferMemory);
-
-    //Create GPU buffer
+    //Buffers for the mesh
     VkBuffer vertexBuffer;
+    std::cout<<"Creating vertex buffer..." << std::endl;
     VkDeviceMemory vertexBufferMemory;
 
     createBuffer(
         device,
         physicalDevice,
-        bufferSize,
-        VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
-        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        sizeof(Vertex) * mesh.vertices.size(),
+        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         vertexBuffer,
-        vertexBufferMemory);
+        vertexBufferMemory
+    );
+
+    void* data;
+    vkMapMemory(device, vertexBufferMemory, 0, sizeof(Vertex) * mesh.vertices.size(), 0, &data);
+    memcpy(data, mesh.vertices.data(), (size_t)(sizeof(Vertex) * mesh.vertices.size()));
+    vkUnmapMemory(device, vertexBufferMemory);
+
+    VkBuffer indexBuffer;
+    VkDeviceMemory indexBufferMemory;
+
+    createBuffer(
+        device,
+        physicalDevice,
+        sizeof(uint32_t) * mesh.indices.size(),
+        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        indexBuffer,
+        indexBufferMemory
+    );
+
+    vkMapMemory(device, indexBufferMemory, 0, sizeof(uint32_t) * mesh.indices.size(), 0, &data);
+    memcpy(data, mesh.indices.data(), (size_t)(sizeof(uint32_t) * mesh.indices.size()));
+    vkUnmapMemory(device, indexBufferMemory);
+
+    VkDeviceAddress vertexBufferAddress = getBufferDeviceAddress(device, vertexBuffer);
+    VkDeviceAddress indexBufferAddress = getBufferDeviceAddress(device, indexBuffer);
+
+    VkAccelerationStructureGeometryTrianglesDataKHR trianglesData{};
+    trianglesData.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+    trianglesData.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
+    trianglesData.vertexStride = sizeof(Vertex);
+    trianglesData.vertexData.deviceAddress = vertexBufferAddress;
+    trianglesData.maxVertex = static_cast<uint32_t>(mesh.vertices.size());
+    
+    trianglesData.indexType = VK_INDEX_TYPE_UINT32;
+    trianglesData.indexData.deviceAddress = indexBufferAddress;
+    trianglesData.transformData.deviceAddress = 0;
+
+    VkAccelerationStructureGeometryKHR geometry{};
+    geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+    geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+    geometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+    geometry.geometry.triangles = trianglesData;
+
+    uint32_t primitiveCount = static_cast<uint32_t>(mesh.indices.size() / 3);
+
+    //Triangle vertex buffer
+    // struct Vertex {
+    //     float pos[3];
+    // };
+
+    // std::vector<Vertex> vertices = {
+    //     //Main Triangle
+    //     {{-1.0f, -1.0f, 0.0f}},
+    //     {{1.0f, -1.0f, 0.0f}},
+    //     {{0.0f, 1.0f, 0.0f}},
+
+    //     //Floor Triangle 1
+    //     {{-6.0f, -1.0f, 6.0f}},
+    //     {{6.0f, -1.0f, 6.0f}},
+    //     {{-6.0f, -1.0f, -6.0f}},
+
+    //     //Floor Triangle 2
+    //     {{6.0f, -1.0f, 6.0f}},
+    //     {{6.0f, -1.0f, -6.0f}},
+    //     {{-6.0f, -1.0f, -6.0f}}
+    // };
+
+    // //Create staging buffer
+    // VkDeviceSize bufferSize = sizeof(Vertex) * vertices.size();
+    
+    // VkBuffer stagingBuffer;
+    // VkDeviceMemory stagingBufferMemory;
+
+    // createBuffer(
+    //     device,
+    //     physicalDevice,
+    //     bufferSize,
+    //     VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+    //     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+    //     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+    //     stagingBuffer,
+    //     stagingBufferMemory
+    // );
+
+    //Copy vertex data to staging buffer
+    // void* data;
+    // vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    // memcpy(data, vertices.data(), (size_t)bufferSize);
+    // vkUnmapMemory(device, stagingBufferMemory);
+
+    // //Create GPU buffer
+    // VkBuffer vertexBuffer;
+    // VkDeviceMemory vertexBufferMemory;
+
+    // createBuffer(
+    //     device,
+    //     physicalDevice,
+    //     bufferSize,
+    //     VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+    //     VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+    //     VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+    //     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+    //     vertexBuffer,
+    //     vertexBufferMemory);
 
     //Camera setup
     VkBuffer cameraBuffer;
@@ -959,27 +1024,27 @@ int main(){
     vkUnmapMemory(device, cameraBufferMemory);
 
     //Copy data from staging buffer to GPU buffer
-    copyBuffer(device, commandPool, graphicsQueue, stagingBuffer, vertexBuffer, bufferSize);
+    // copyBuffer(device, commandPool, graphicsQueue, stagingBuffer, vertexBuffer, bufferSize);
 
-    vkDestroyBuffer(device, stagingBuffer, nullptr);
-    vkFreeMemory(device, stagingBufferMemory, nullptr);
+    // vkDestroyBuffer(device, stagingBuffer, nullptr);
+    // vkFreeMemory(device, stagingBufferMemory, nullptr);
 
-    VkDeviceAddress vertexAddress = getBufferDeviceAddress(device, vertexBuffer);
+    // VkDeviceAddress vertexAddress = getBufferDeviceAddress(device, vertexBuffer);
 
     //Describe geometry
-    VkAccelerationStructureGeometryKHR geometry{};
-    geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
-    geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
-    geometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+    // VkAccelerationStructureGeometryKHR geometry{};
+    // geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+    // geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+    // geometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
 
-    geometry.geometry.triangles.sType = 
-        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
-    geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
-    geometry.geometry.triangles.vertexData.deviceAddress = vertexAddress;
-    geometry.geometry.triangles.vertexStride = sizeof(Vertex);
-    geometry.geometry.triangles.maxVertex = 8; // 9 vertices total, indexed from 0
-    geometry.geometry.triangles.indexType = VK_INDEX_TYPE_NONE_KHR;
-    geometry.geometry.triangles.transformData.deviceAddress = 0;
+    // geometry.geometry.triangles.sType = 
+    //     VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+    // geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
+    // geometry.geometry.triangles.vertexData.deviceAddress = vertexAddress;
+    // geometry.geometry.triangles.vertexStride = sizeof(Vertex);
+    // geometry.geometry.triangles.maxVertex = 8; // 9 vertices total, indexed from 0
+    // geometry.geometry.triangles.indexType = VK_INDEX_TYPE_NONE_KHR;
+    // geometry.geometry.triangles.transformData.deviceAddress = 0;
 
     //Query sizes
     VkAccelerationStructureBuildGeometryInfoKHR buildInfo{};
@@ -990,7 +1055,7 @@ int main(){
     buildInfo.pGeometries = &geometry;
     buildInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
 
-    uint32_t primitiveCount = 3; // Three triangles
+    // uint32_t primitiveCount = 3; // Three triangles
 
     VkAccelerationStructureBuildSizesInfoKHR sizeInfo{};
     sizeInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
@@ -1051,6 +1116,9 @@ int main(){
 
     VkAccelerationStructureBuildRangeInfoKHR rangeInfo{};
     rangeInfo.primitiveCount = primitiveCount;
+    rangeInfo.primitiveOffset = 0;
+    rangeInfo.firstVertex = 0;
+    rangeInfo.transformOffset = 0;
 
     const VkAccelerationStructureBuildRangeInfoKHR* pRangeInfo = &rangeInfo;
 
@@ -1426,7 +1494,7 @@ int main(){
     pipelineInfo.pStages = shaderStages;
     pipelineInfo.groupCount = (uint32_t)std::size(shaderGroups);
     pipelineInfo.pGroups = shaderGroups;
-    pipelineInfo.maxPipelineRayRecursionDepth = 2;
+    pipelineInfo.maxPipelineRayRecursionDepth = 4;
     pipelineInfo.layout = pipelineLayout;
 
     if (vkCreateRayTracingPipelinesKHR(device, VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &rayTracingPipeline) != VK_SUCCESS) {
@@ -1847,6 +1915,8 @@ int main(){
     vkFreeMemory(device, blasMemory, nullptr);
     vkDestroyBuffer(device, vertexBuffer, nullptr);
     vkFreeMemory(device, vertexBufferMemory, nullptr);
+    vkDestroyBuffer(device, indexBuffer, nullptr);
+    vkFreeMemory(device, indexBufferMemory, nullptr);
     vkDestroyAccelerationStructureKHR(device, tlas, nullptr);
     vkDestroyBuffer(device, tlasBuffer, nullptr);
     vkFreeMemory(device, tlasMemory, nullptr);
