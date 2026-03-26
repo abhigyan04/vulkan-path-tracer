@@ -875,7 +875,7 @@ int main(){
     };
 
     //Load model
-    Mesh mesh = loadOBJ("assets/bunny.obj");
+    ModelData modelData = loadOBJ("assets/CornellBox-Original.obj");
 
     //Buffers for the mesh
     VkBuffer vertexBuffer;
@@ -885,7 +885,7 @@ int main(){
     createBuffer(
         device,
         physicalDevice,
-        sizeof(Vertex) * mesh.vertices.size(),
+        sizeof(Vertex) * modelData.mesh.vertices.size(),
         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         vertexBuffer,
@@ -893,9 +893,26 @@ int main(){
     );
 
     void* data;
-    vkMapMemory(device, vertexBufferMemory, 0, sizeof(Vertex) * mesh.vertices.size(), 0, &data);
-    memcpy(data, mesh.vertices.data(), (size_t)(sizeof(Vertex) * mesh.vertices.size()));
+    vkMapMemory(device, vertexBufferMemory, 0, sizeof(Vertex) * modelData.mesh.vertices.size(), 0, &data);
+    memcpy(data, modelData.mesh.vertices.data(), (size_t)(sizeof(Vertex) * modelData.mesh.vertices.size()));
     vkUnmapMemory(device, vertexBufferMemory);
+
+    VkBuffer materialBuffer;
+    VkDeviceMemory materialBufferMemory;
+
+    createBuffer(
+        device,
+        physicalDevice,
+        sizeof(Material) * modelData.materials.size(),
+        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        materialBuffer,
+        materialBufferMemory
+    );
+
+    void* materialData;
+    vkMapMemory(device, materialBufferMemory, 0, sizeof(Material) * modelData.materials.size(), 0, &materialData);
+    vkUnmapMemory(device, materialBufferMemory);
 
     VkBuffer indexBuffer;
     VkDeviceMemory indexBufferMemory;
@@ -903,15 +920,15 @@ int main(){
     createBuffer(
         device,
         physicalDevice,
-        sizeof(uint32_t) * mesh.indices.size(),
+        sizeof(uint32_t) * modelData.mesh.indices.size(),
         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         indexBuffer,
         indexBufferMemory
     );
 
-    vkMapMemory(device, indexBufferMemory, 0, sizeof(uint32_t) * mesh.indices.size(), 0, &data);
-    memcpy(data, mesh.indices.data(), (size_t)(sizeof(uint32_t) * mesh.indices.size()));
+    vkMapMemory(device, indexBufferMemory, 0, sizeof(uint32_t) * modelData.mesh.indices.size(), 0, &data);
+    memcpy(data, modelData.mesh.indices.data(), (size_t)(sizeof(uint32_t) * modelData.mesh.indices.size()));
     vkUnmapMemory(device, indexBufferMemory);
 
     VkDeviceAddress vertexBufferAddress = getBufferDeviceAddress(device, vertexBuffer);
@@ -922,7 +939,7 @@ int main(){
     trianglesData.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
     trianglesData.vertexStride = sizeof(Vertex);
     trianglesData.vertexData.deviceAddress = vertexBufferAddress;
-    trianglesData.maxVertex = static_cast<uint32_t>(mesh.vertices.size());
+    trianglesData.maxVertex = static_cast<uint32_t>(modelData.mesh.vertices.size());
     
     trianglesData.indexType = VK_INDEX_TYPE_UINT32;
     trianglesData.indexData.deviceAddress = indexBufferAddress;
@@ -934,7 +951,7 @@ int main(){
     geometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
     geometry.geometry.triangles = trianglesData;
 
-    uint32_t primitiveCount = static_cast<uint32_t>(mesh.indices.size() / 3);
+    uint32_t primitiveCount = static_cast<uint32_t>(modelData.mesh.indices.size() / 3);
 
     //Triangle vertex buffer
     // struct Vertex {
@@ -1012,10 +1029,10 @@ int main(){
 
     Camera camera;
 
-    camera.position = glm::vec3(0,0,-3);
-    camera.forward  = glm::vec3(0,0,1);
-    camera.right    = glm::vec3(1,0,0);
-    camera.up       = glm::vec3(0,1,0);
+    camera.position = glm::vec3(0,1,2.5);
+    camera.forward  = glm::normalize(glm::vec3(0, 1, 0) - camera.position);
+    camera.right    = glm::normalize(glm::cross(camera.forward, glm::vec3(0,1,0)));
+    camera.up       = glm::normalize(glm::cross(camera.right, camera.forward));
     camera.fov      = glm::radians(45.0);
 
     void* cameraData;
@@ -1376,7 +1393,13 @@ int main(){
     vertexBufferBinding.descriptorCount = 1;
     vertexBufferBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
 
-    std::array<VkDescriptorSetLayoutBinding, 4> bindings = { asBinding, imgBinding, cameraBufferBinding, vertexBufferBinding };
+    VkDescriptorSetLayoutBinding materialBufferBinding{};
+    materialBufferBinding.binding = 4;
+    materialBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    materialBufferBinding.descriptorCount = 1;
+    materialBufferBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+
+    std::array<VkDescriptorSetLayoutBinding, 5> bindings = { asBinding, imgBinding, cameraBufferBinding, vertexBufferBinding, materialBufferBinding };
 
     VkDescriptorSetLayoutCreateInfo tlasLayoutInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
     tlasLayoutInfo.bindingCount = (uint32_t)bindings.size();
@@ -1388,11 +1411,12 @@ int main(){
     VkDescriptorPool tlasDescriptorPool;
     VkDescriptorSet tlasDescriptorSet;
 
-    std::array<VkDescriptorPoolSize, 4> poolSizes{};
+    std::array<VkDescriptorPoolSize, 5> poolSizes{};
     poolSizes[0] = { VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1 };
     poolSizes[1] = { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 };
     poolSizes[2] = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 };
     poolSizes[3] = { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 };
+    poolSizes[4] = { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 };
 
     VkDescriptorPoolCreateInfo poolInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
     poolInfo.maxSets = 1;
@@ -1657,7 +1681,19 @@ int main(){
     vertexBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     vertexBufferWrite.pBufferInfo = &vertexBufferInfo;
 
-    std::array<VkWriteDescriptorSet, 4> writes = { asWrite, imgWrite, cameraDescriptorWrite, vertexBufferWrite };
+    VkDescriptorBufferInfo materialBufferInfo{};
+    materialBufferInfo.buffer = materialBuffer;
+    materialBufferInfo.offset = 0;
+    materialBufferInfo.range = VK_WHOLE_SIZE;
+
+    VkWriteDescriptorSet materialBufferWrite{ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+    materialBufferWrite.dstSet = tlasDescriptorSet;
+    materialBufferWrite.dstBinding = 4;
+    materialBufferWrite.descriptorCount = 1;
+    materialBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    materialBufferWrite.pBufferInfo = &materialBufferInfo;
+
+    std::array<VkWriteDescriptorSet, 5> writes = { asWrite, imgWrite, cameraDescriptorWrite, vertexBufferWrite, materialBufferWrite };
     vkUpdateDescriptorSets(device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
 
     //Record Command Buffers
@@ -1777,7 +1813,7 @@ int main(){
     std::vector<VkFence> imagesInFlight(swapChainImages.size(), VK_NULL_HANDLE);
 
     //Main Loop
-     while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
         vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
@@ -1801,7 +1837,7 @@ int main(){
         vkResetFences(device, 1, &inFlightFences[currentFrame]);
         vkResetCommandBuffer(commandBuffers[currentFrame], 0);
 
-        float speed = 0.005f;
+        float speed = 0.0005f;
 
         if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
             camera.position += camera.forward * speed;
@@ -1822,7 +1858,7 @@ int main(){
         direction.y = sin(glm::radians(pitch));
         direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 
-        camera.forward = glm::normalize(direction);
+        camera.forward = glm::normalize(-direction);
         camera.right = glm::normalize(glm::cross(camera.forward, glm::vec3(0, 1, 0)));
         camera.up = glm::normalize(glm::cross(camera.right, camera.forward));
 
@@ -1934,6 +1970,8 @@ int main(){
     vkFreeMemory(device, blasMemory, nullptr);
     vkDestroyBuffer(device, vertexBuffer, nullptr);
     vkFreeMemory(device, vertexBufferMemory, nullptr);
+    vkDestroyBuffer(device, materialBuffer, nullptr);
+    vkFreeMemory(device, materialBufferMemory, nullptr);
     vkDestroyBuffer(device, indexBuffer, nullptr);
     vkFreeMemory(device, indexBufferMemory, nullptr);
     vkDestroyAccelerationStructureKHR(device, tlas, nullptr);

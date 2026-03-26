@@ -4,4 +4,4 @@
 #include <string>
 
 
-Mesh loadOBJ(const std::string&  path);
+ModelData loadOBJ(const std::string&  path);
