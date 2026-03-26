@@ -325,9 +325,22 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\main.cpp" />
-    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\objLoader.cpp" />
-    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\objLoader.hpp" />
-    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\mesh.hpp" />
+    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\loader\objLoader.cpp" />
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\loader\objLoader.hpp" />
+    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\acceleration.cpp" />
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\acceleration.hpp" />
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\camera.hpp" />
+    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\commands.cpp" />
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\commands.hpp" />
+    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\descriptors.cpp" />
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\descriptors.hpp" />
+    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\gpuScene.cpp" />
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\gpuScene.hpp" />
+    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\pipeline.cpp" />
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\pipeline.hpp" />
+    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\sbt.cpp" />
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\sbt.hpp" />
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\scene.hpp" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

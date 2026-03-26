@@ -4,15 +4,54 @@
     <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\objLoader.cpp">
+    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\loader\objLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\acceleration.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\commands.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\descriptors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\gpuScene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\pipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\sbt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\objLoader.hpp">
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\loader\objLoader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\mesh.hpp">
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\acceleration.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\camera.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\commands.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\descriptors.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\gpuScene.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\pipeline.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\sbt.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\scene.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

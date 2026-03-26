@@ -25,9 +25,22 @@ FetchContent_MakeAvailable(glfw)
 
 add_executable(VULKAN_RT
     src/main.cpp
-    src/objLoader.cpp
-    src/objLoader.hpp
-    src/mesh.hpp
+    src/loader/objLoader.cpp
+    src/loader/objLoader.hpp
+    src/renderer/acceleration.cpp
+    src/renderer/acceleration.hpp
+    src/renderer/camera.hpp
+    src/renderer/commands.cpp
+    src/renderer/commands.hpp
+    src/renderer/descriptors.cpp
+    src/renderer/descriptors.hpp
+    src/renderer/gpuScene.cpp
+    src/renderer/gpuScene.hpp
+    src/renderer/pipeline.cpp
+    src/renderer/pipeline.hpp
+    src/renderer/sbt.cpp
+    src/renderer/sbt.hpp
+    src/renderer/scene.hpp
 )
 
 target_include_directories(VULKAN_RT PRIVATE
