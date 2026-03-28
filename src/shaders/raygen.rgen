@@ -12,30 +12,45 @@ layout(set=0, binding=2) uniform Camera
     float fov;
 } camera;
 
+layout(set=0, binding=6, rgba32f) uniform image2D accumImage;
+
+layout(push_constant) uniform PushConstants
+{
+    int frame;
+} pushConstants;
+
 struct RayPayload
 {
     vec3 color;
     int depth;
 };
 
+float rand(vec2 co)
+{
+    return fract(sin(dot(co,vec2(12.9898,78.233))) * 43758.5453);
+}
+
 layout(location = 0) rayPayloadEXT RayPayload payload;
+layout(location = 1) rayPayloadEXT RayPayload secondaryPayload;
+layout(location = 2) rayPayloadEXT float shadowPayload;
 
 void main()
 {
     ivec2 pix = ivec2(gl_LaunchIDEXT.xy);
     ivec2 size = ivec2(gl_LaunchSizeEXT.xy);
 
-    vec2 uv = (vec2(pix) + vec2(0.5)) / vec2(size);
-    vec2 screen = uv * 2.0 - 1.0;
-
+    vec2 jitter = vec2(rand(vec2(pix) + vec2(0.0, 0.0)), rand(vec2(pix) + vec2(1.0, 1.0)));
+    vec2 uv = (vec2(pix) + jitter) / vec2(size);
+    
     float aspect = float(size.x) / float(size.y);
-    screen.x *= aspect;
+    
+    vec2 screen = vec2((2.0 * uv.x - 1.0) * aspect, 1.0 - 2.0 * uv.y);
 
-    //float fov = radians(45.0);
-    float scale = tan(radians(camera.fov) * 0.5);
+    float fov = radians(45.0);
+    float scale = tan(fov * 0.5);
 
     vec3 origin = camera.position;
-    vec3 dir = camera.forward + screen.x * camera.right - screen.y * camera.up;
+    vec3 dir = camera.forward + screen.x * camera.right * scale + screen.y * camera.up * scale;
     dir = normalize(dir);
 
     // payload = vec3(0.0);
@@ -54,7 +69,14 @@ void main()
         0
     );
 
-    vec3 col = clamp(payload.color, 0.0, 1.0);
-    // col = col / (col + vec3(1.0));
-    imageStore(outImage, pix, vec4(col, 1.0));
+    vec4 prev = imageLoad(accumImage, pix);
+    vec4 current = vec4(clamp(payload.color, 0.0, 1.0), 1.0);
+    float alpha = 1.0 / float(pushConstants.frame + 1);
+    vec4 accum = mix(prev, current, alpha);
+    imageStore(accumImage, pix, accum);
+
+    vec3 finalColor = accum.xyz / (accum.xyz + vec3(1.0)); // Reinhard tone mapping
+    finalColor = pow(finalColor, vec3(1.0/2.2)); // Gamma correction
+
+    imageStore(outImage, pix, vec4(finalColor, 1.0));
 }

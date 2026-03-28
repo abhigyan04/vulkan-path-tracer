@@ -11,6 +11,10 @@ struct RTPipeline
     VkPipelineLayout layout;
 };
 
+struct PushConstants {
+    int frame;
+};
+
 std::vector<char> readFile(const std::string& filename);
 VkShaderModule createShaderModule(VkDevice device, const std::vector<char>& code);
 RTPipeline createRayTracingPipeline(VkDevice device, VkDescriptorSetLayout descriptorSetLayout);

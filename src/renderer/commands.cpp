@@ -2,9 +2,9 @@
 #include <iostream>
 
 
-void recordCommandBuffer(VkDevice device, VkCommandBuffer commandBuffer, uint32_t imageIndex, VkPipeline pipeline, VkPipelineLayout pipelineLayout,
+void recordCommandBuffer(VkDevice device, VkCommandBuffer commandBuffer, uint32_t frameIndex, uint32_t imageIndex, VkPipeline pipeline, VkPipelineLayout pipelineLayout,
     VkDescriptorSet descriptorSet,
-    VkImage rtImage, std::vector<VkImage> swapChainImages, const SBT& sbt, VkExtent2D extent)
+    VkImage rtImage, VkImage accumImage, std::vector<VkImage> swapChainImages, const SBT& sbt, VkExtent2D extent, bool cameraMoved)
 {
     auto vkCmdTraceRaysKHR =
         (PFN_vkCmdTraceRaysKHR)vkGetDeviceProcAddr(device, "vkCmdTraceRaysKHR");
@@ -27,6 +27,30 @@ void recordCommandBuffer(VkDevice device, VkCommandBuffer commandBuffer, uint32_
                             1,
                             &descriptorSet,
                             0, nullptr);
+
+    if(cameraMoved)
+    {
+        VkClearColorValue clearColor = {0.0f, 0.0f, 0.0f, 0.0f};
+
+        VkImageSubresourceRange clearRange{};
+        clearRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        clearRange.baseMipLevel = 0;
+        clearRange.levelCount = 1;
+        clearRange.baseArrayLayer = 0;
+        clearRange.layerCount = 1;
+
+        vkCmdClearColorImage(commandBuffer, accumImage, VK_IMAGE_LAYOUT_GENERAL, &clearColor, 1, &clearRange);
+    }
+                        
+    PushConstants pushConstants{};
+    pushConstants.frame = frameIndex;
+
+    vkCmdPushConstants(commandBuffer,
+        pipelineLayout,
+        VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+        0,
+        sizeof(PushConstants),
+        &pushConstants);
 
     vkCmdTraceRaysKHR(commandBuffer,
         &sbt.raygenRegion,

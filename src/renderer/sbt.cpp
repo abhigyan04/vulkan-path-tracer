@@ -11,8 +11,7 @@ SBT createSBT(VkDevice device, VkPhysicalDevice physicalDevice, VkPipeline rayTr
     SBT sbt;
 
     //Build the SBT
-    const uint32_t groupCount = 4;
-    
+    const uint32_t groupCount = 5; // raygen, miss, chit, shadow miss, shadow hit
 
     auto alignUp = [](VkDeviceSize v, VkDeviceSize a) {
         return (v + a - 1) & ~(a - 1);
@@ -37,7 +36,7 @@ SBT createSBT(VkDevice device, VkPhysicalDevice physicalDevice, VkPipeline rayTr
     // Each region start must be aligned to base alignment
     VkDeviceSize raygenRegionSize = alignUp(recordStride, baseAlign);
     VkDeviceSize missRegionSize   = alignUp(recordStride * 2, baseAlign);
-    VkDeviceSize hitRegionSize    = alignUp(recordStride, baseAlign);
+    VkDeviceSize hitRegionSize    = alignUp(recordStride * 2, baseAlign);
 
     VkDeviceSize sbtSize = raygenRegionSize + missRegionSize + hitRegionSize;
 
@@ -81,15 +80,20 @@ SBT createSBT(VkDevice device, VkPhysicalDevice physicalDevice, VkPipeline rayTr
     memcpy(mapped + raygenRegionSize + 0 * recordStride,
        handles.data() + 1 * handleSize,
        handleSize);
-    
-    // group 4 = shadow miss
+
+    // group 2 = hit
+    memcpy(mapped + raygenRegionSize + missRegionSize + 0 * recordStride,
+       handles.data() + 2 * handleSize,
+       handleSize);
+
+    // group 3 = shadow miss
     memcpy(mapped + raygenRegionSize + 1 * recordStride,
        handles.data() + 3 * handleSize,
        handleSize);
-
-    // group 2 = hit
-    memcpy(mapped + raygenRegionSize + missRegionSize,
-       handles.data() + 2 * handleSize,
+    
+    // group 4 = shadow hit
+    memcpy(mapped + raygenRegionSize + missRegionSize + 1 * recordStride,
+       handles.data() + 4 * handleSize,
        handleSize);
 
     vkUnmapMemory(device, sbtBufferMemory);
@@ -110,7 +114,7 @@ SBT createSBT(VkDevice device, VkPhysicalDevice physicalDevice, VkPipeline rayTr
     VkStridedDeviceAddressRegionKHR hitSBT{};
     hitSBT.deviceAddress = sbtAddress + raygenRegionSize + missRegionSize;
     hitSBT.stride = recordStride;
-    hitSBT.size   = recordStride;
+    hitSBT.size   = recordStride * 2;
 
     VkStridedDeviceAddressRegionKHR callableSBT{};
 

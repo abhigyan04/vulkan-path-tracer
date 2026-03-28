@@ -42,6 +42,12 @@ RTPipeline createRayTracingPipeline(VkDevice device, VkDescriptorSetLayout descr
         (PFN_vkCreateRayTracingPipelinesKHR)vkGetDeviceProcAddr(device, "vkCreateRayTracingPipelinesKHR");
     
     RTPipeline rtPipeline;
+
+    VkPushConstantRange pushConstantRange{};
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
+    pushConstantRange.offset = 0;
+    pushConstantRange.size = sizeof(PushConstants);
+
     //Create Pipeline Layout
     VkPipelineLayout pipelineLayout;
 
@@ -49,6 +55,8 @@ RTPipeline createRayTracingPipeline(VkDevice device, VkDescriptorSetLayout descr
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
+    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
     if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
         std::cerr << "Failed to create pipeline layout!" << std::endl;
@@ -61,14 +69,16 @@ RTPipeline createRayTracingPipeline(VkDevice device, VkDescriptorSetLayout descr
     auto misscode = readFile("src/shaders/miss.spv");
     auto chitcode = readFile("src/shaders/chit.spv");
     auto shadowmisscode = readFile("src/shaders/shadowmiss.spv");
+    auto shadowhitcode = readFile("src/shaders/shadowhit.spv");
     VkShaderModule raygenShaderModule = createShaderModule(device, raygenCode);
     VkShaderModule missShaderModule = createShaderModule(device, misscode);
     VkShaderModule chitShaderModule = createShaderModule(device, chitcode);
     VkShaderModule shadowmissShaderModule = createShaderModule(device, shadowmisscode);
+    VkShaderModule shadowhitShaderModule = createShaderModule(device, shadowhitcode);
 
     VkPipeline rayTracingPipeline;
 
-    VkPipelineShaderStageCreateInfo shaderStages[4]{};
+    VkPipelineShaderStageCreateInfo shaderStages[5]{};
 
     shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStages[0].stage = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
@@ -90,7 +100,12 @@ RTPipeline createRayTracingPipeline(VkDevice device, VkDescriptorSetLayout descr
     shaderStages[3].module = shadowmissShaderModule;
     shaderStages[3].pName = "main";
 
-    VkRayTracingShaderGroupCreateInfoKHR shaderGroups[4]{};
+    shaderStages[4].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    shaderStages[4].stage = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+    shaderStages[4].module = shadowhitShaderModule;
+    shaderStages[4].pName = "main";
+
+    VkRayTracingShaderGroupCreateInfoKHR shaderGroups[5]{};
 
     //Group 0: raygen
     shaderGroups[0].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
@@ -124,13 +139,21 @@ RTPipeline createRayTracingPipeline(VkDevice device, VkDescriptorSetLayout descr
     shaderGroups[3].anyHitShader = VK_SHADER_UNUSED_KHR;
     shaderGroups[3].intersectionShader = VK_SHADER_UNUSED_KHR;
 
+    //Group 4: shadow hit
+    shaderGroups[4].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+    shaderGroups[4].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
+    shaderGroups[4].generalShader = VK_SHADER_UNUSED_KHR;
+    shaderGroups[4].closestHitShader = 4; // Index of shadow hit shader in shaderStages
+    shaderGroups[4].anyHitShader = VK_SHADER_UNUSED_KHR;
+    shaderGroups[4].intersectionShader = VK_SHADER_UNUSED_KHR;
+
     VkRayTracingPipelineCreateInfoKHR pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
     pipelineInfo.stageCount = (uint32_t)std::size(shaderStages);
     pipelineInfo.pStages = shaderStages;
     pipelineInfo.groupCount = (uint32_t)std::size(shaderGroups);
     pipelineInfo.pGroups = shaderGroups;
-    pipelineInfo.maxPipelineRayRecursionDepth = 4;
+    pipelineInfo.maxPipelineRayRecursionDepth = 2;
     pipelineInfo.layout = pipelineLayout;
 
     if (vkCreateRayTracingPipelinesKHR(device, VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &rayTracingPipeline) != VK_SUCCESS) {
@@ -145,6 +168,7 @@ RTPipeline createRayTracingPipeline(VkDevice device, VkDescriptorSetLayout descr
     vkDestroyShaderModule(device, missShaderModule, nullptr);
     vkDestroyShaderModule(device, chitShaderModule, nullptr);
     vkDestroyShaderModule(device, shadowmissShaderModule, nullptr);
+    vkDestroyShaderModule(device, shadowhitShaderModule, nullptr);
 
     rtPipeline.pipeline = rayTracingPipeline;
     rtPipeline.layout = pipelineLayout;

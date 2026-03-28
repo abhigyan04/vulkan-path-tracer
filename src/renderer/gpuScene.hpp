@@ -14,9 +14,6 @@ struct SceneGPUResources
 
     VkBuffer materialBuffer;
     VkDeviceMemory materialBufferMemory;
-
-    VkBuffer materialIDBuffer;
-    VkDeviceMemory materialIDBufferMemory;
 };
 
 void createBuffer(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);

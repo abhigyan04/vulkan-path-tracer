@@ -11,7 +11,7 @@ struct DescriptorBundle
     VkDescriptorPool pool;
 };
 
-DescriptorBundle createSceneDescriptorSet(VkDevice device, VkAccelerationStructureKHR tlas, VkImageView outputImageView, VkBuffer cameraBuffer, const SceneGPUResources& resources);
+DescriptorBundle createSceneDescriptorSet(VkDevice device, VkAccelerationStructureKHR tlas, VkBuffer cameraBuffer, const SceneGPUResources& resources);
 void updateSceneDescriptors(VkDevice device, VkDescriptorSet descriptorSet, const SceneGPUResources& resources,
-    VkAccelerationStructureKHR tlas, VkImageView rtImageView, VkBuffer cameraBuffer);
+    VkAccelerationStructureKHR tlas, VkImageView rtImageView, VkImageView accumImageView, VkBuffer cameraBuffer);
 void destroyDescriptors(VkDevice device, DescriptorBundle& d);

@@ -2,7 +2,7 @@
 #include <array>
 
 
-DescriptorBundle createSceneDescriptorSet(VkDevice device, VkAccelerationStructureKHR tlas, VkImageView outputImageView, VkBuffer cameraBuffer, const SceneGPUResources& resources)
+DescriptorBundle createSceneDescriptorSet(VkDevice device, VkAccelerationStructureKHR tlas, VkBuffer cameraBuffer, const SceneGPUResources& resources)
 {
     DescriptorBundle db;
 
@@ -45,13 +45,13 @@ DescriptorBundle createSceneDescriptorSet(VkDevice device, VkAccelerationStructu
     materialBufferBinding.descriptorCount = 1;
     materialBufferBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
 
-    VkDescriptorSetLayoutBinding materialIDBufferBinding{};
-    materialIDBufferBinding.binding = 6;
-    materialIDBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    materialIDBufferBinding.descriptorCount = 1;
-    materialIDBufferBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+    VkDescriptorSetLayoutBinding accumImgBinding{};
+    accumImgBinding.binding = 6;
+    accumImgBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    accumImgBinding.descriptorCount = 1;
+    accumImgBinding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 
-    std::array<VkDescriptorSetLayoutBinding, 7> bindings = { asBinding, imgBinding, cameraBufferBinding, vertexBufferBinding, indexBufferBinding, materialBufferBinding, materialIDBufferBinding };
+    std::array<VkDescriptorSetLayoutBinding, 7> bindings = { asBinding, imgBinding, cameraBufferBinding, vertexBufferBinding, indexBufferBinding, materialBufferBinding, accumImgBinding };
 
     VkDescriptorSetLayoutCreateInfo tlasLayoutInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
     tlasLayoutInfo.bindingCount = (uint32_t)bindings.size();
@@ -70,7 +70,7 @@ DescriptorBundle createSceneDescriptorSet(VkDevice device, VkAccelerationStructu
     poolSizes[3] = { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 };
     poolSizes[4] = { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 };
     poolSizes[5] = { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 };
-    poolSizes[6] = { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 };
+    poolSizes[6] = { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 };
 
     VkDescriptorPoolCreateInfo poolInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
     poolInfo.maxSets = 1;
@@ -93,7 +93,7 @@ DescriptorBundle createSceneDescriptorSet(VkDevice device, VkAccelerationStructu
     return db;
 }
 
-void updateSceneDescriptors(VkDevice device, VkDescriptorSet descriptorSet, const SceneGPUResources& resources, VkAccelerationStructureKHR tlas, VkImageView rtImageView, VkBuffer cameraBuffer)
+void updateSceneDescriptors(VkDevice device, VkDescriptorSet descriptorSet, const SceneGPUResources& resources, VkAccelerationStructureKHR tlas, VkImageView rtImageView, VkImageView accumImageView, VkBuffer cameraBuffer)
 {
     VkWriteDescriptorSetAccelerationStructureKHR asInfo{
         VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR
@@ -168,19 +168,18 @@ void updateSceneDescriptors(VkDevice device, VkDescriptorSet descriptorSet, cons
     materialBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     materialBufferWrite.pBufferInfo = &materialBufferInfo;
 
-    VkDescriptorBufferInfo materialIDBufferInfo{};
-    materialIDBufferInfo.buffer = resources.materialIDBuffer;
-    materialIDBufferInfo.offset = 0;
-    materialIDBufferInfo.range = VK_WHOLE_SIZE;
+    VkDescriptorImageInfo accumImageInfo{};
+    accumImageInfo.imageView = accumImageView;     // accumulation image view
+    accumImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;     // IMPORTANT
 
-    VkWriteDescriptorSet materialIDBufferWrite{ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
-    materialIDBufferWrite.dstSet = descriptorSet;
-    materialIDBufferWrite.dstBinding = 6;
-    materialIDBufferWrite.descriptorCount = 1;
-    materialIDBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    materialIDBufferWrite.pBufferInfo = &materialBufferInfo;
+    VkWriteDescriptorSet accumImgWrite{ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+    accumImgWrite.dstSet = descriptorSet;
+    accumImgWrite.dstBinding = 6;
+    accumImgWrite.descriptorCount = 1;
+    accumImgWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    accumImgWrite.pImageInfo = &accumImageInfo;
 
-    std::array<VkWriteDescriptorSet, 7> writes = { asWrite, imgWrite, cameraDescriptorWrite, vertexBufferWrite, indexBufferWrite, materialBufferWrite, materialIDBufferWrite };
+    std::array<VkWriteDescriptorSet, 7> writes = { asWrite, imgWrite, cameraDescriptorWrite, vertexBufferWrite, indexBufferWrite, materialBufferWrite, accumImgWrite };
     vkUpdateDescriptorSets(device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
 }
 

@@ -196,31 +196,12 @@ SceneGPUResources uploadSceneToGPU(VkDevice device, VkPhysicalDevice physicalDev
     memcpy(data, scene.materials.data(), (size_t)(sizeof(GPUMaterial) * scene.materials.size()));
     vkUnmapMemory(device, materialBufferMemory);
 
-    VkBuffer materialIDBuffer;
-    VkDeviceMemory materialIDBufferMemory;
-
-    createBuffer(
-        device,
-        physicalDevice,
-        sizeof(uint32_t) * scene.mesh.materialIDs.size(),
-        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        materialIDBuffer,
-        materialIDBufferMemory
-    );
-
-    vkMapMemory(device, materialIDBufferMemory, 0, sizeof(uint32_t) * scene.mesh.materialIDs.size(), 0, &data);
-    memcpy(data, scene.mesh.materialIDs.data(), (size_t)(sizeof(uint32_t) * scene.mesh.materialIDs.size()));
-    vkUnmapMemory(device, materialIDBufferMemory);
-
     resources.vertexBuffer = vertexBuffer;
     resources.vertexBufferMemory = vertexBufferMemory;
     resources.indexBuffer = indexBuffer;
     resources.indexBufferMemory = indexBufferMemory;
     resources.materialBuffer = materialBuffer;
     resources.materialBufferMemory = materialBufferMemory;
-    resources.materialIDBuffer = materialIDBuffer;
-    resources.materialIDBufferMemory = materialIDBufferMemory;
 
     return resources;
 }
@@ -235,7 +216,4 @@ void destroySceneGPU(VkDevice device, SceneGPUResources& r)
 
     vkDestroyBuffer(device, r.materialBuffer, nullptr);
     vkFreeMemory(device, r.materialBufferMemory, nullptr);
-
-    vkDestroyBuffer(device, r.materialIDBuffer, nullptr);
-    vkFreeMemory(device, r.materialIDBufferMemory, nullptr);
 }

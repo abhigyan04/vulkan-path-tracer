@@ -81,46 +81,18 @@ SceneData loadOBJ(const std::string& path)
                     });
                 }
 
-                scene.mesh.vertices.push_back({pos, 0.0f, normal, 0.0f});
+                scene.mesh.vertices.push_back({
+                    glm::vec4(pos, 1.0f),
+                    glm::vec4(normal, 0.0f),
+                    glm::uvec4(static_cast<uint32_t>(matID), 0u, 0u, 0u)
+                });
             }
 
             scene.mesh.indices.push_back(baseIndex + 0);
             scene.mesh.indices.push_back(baseIndex + 1);
             scene.mesh.indices.push_back(baseIndex + 2);
 
-            scene.mesh.materialIDs.push_back(static_cast<uint32_t>(matID));
-
             indexOffset += fv;
-
-            // tinyobj::index_t idx0 = shape.mesh.indices[indexOffset + 0];
-            // tinyobj::index_t idx1 = shape.mesh.indices[indexOffset + 1];
-            // tinyobj::index_t idx2 = shape.mesh.indices[indexOffset + 2];
-
-            // glm::vec3 v0 = {
-            //     attrib.vertices[3 * idx0.vertex_index + 0],
-            //     attrib.vertices[3 * idx0.vertex_index + 1],
-            //     attrib.vertices[3 * idx0.vertex_index + 2]
-            // };
-
-            // glm::vec3 v1 = {
-            //     attrib.vertices[3 * idx1.vertex_index + 0],
-            //     attrib.vertices[3 * idx1.vertex_index + 1],
-            //     attrib.vertices[3 * idx1.vertex_index + 2]
-            // };
-
-            // glm::vec3 v2 = {
-            //     attrib.vertices[3 * idx2.vertex_index + 0],
-            //     attrib.vertices[3 * idx2.vertex_index + 1],
-            //     attrib.vertices[3 * idx2.vertex_index + 2]
-            // };
-
-            // glm::vec3 faceNormal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
-
-            // normals[idx0.vertex_index] += faceNormal;
-            // normals[idx1.vertex_index] += faceNormal;
-            // normals[idx2.vertex_index] += faceNormal;
-
-            // indexOffset += fv;
         }
     }
 
@@ -130,53 +102,4 @@ SceneData loadOBJ(const std::string& path)
     std::cout << "Materials: " << scene.materials.size() << "\n";
 
     return scene;
-
-    // for(auto& n : normals) {
-    //     n = glm::normalize(n);
-    // }
-
-    // for (const auto& shape : shapes) {
-    //     size_t indexOffset = 0;
-    //     for(size_t f = 0 ; f < shape.mesh.num_face_vertices.size() ; f ++) {
-    //         int fv = shape.mesh.num_face_vertices[f];
-    //         if(fv != 3) {
-    //             indexOffset += fv;
-    //             continue;
-    //         }
-    //         int matID = shape.mesh.material_ids[f];
-    //         // std::cout << "Material ID: " << matID << std::endl;
-    //         glm::vec3 color(0.8f);
-    //         if(matID >= 0 && matID < materials.size()) {
-    //             const auto& mat = materials[matID];
-    //             color = glm::vec3(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]);
-    //         }
-    //         else
-    //             matID = 0;
-            
-    //         for(int v = 0 ; v < 3 ; v++) {
-    //             tinyobj::index_t idx = shape.mesh.indices[indexOffset + v];
-
-    //             glm::vec3 pos = {
-    //                 attrib.vertices[3 * idx.vertex_index + 0],
-    //                 attrib.vertices[3 * idx.vertex_index + 1],
-    //                 attrib.vertices[3 * idx.vertex_index + 2]
-    //             };
-
-    //             glm::vec3 normal = normals[idx.vertex_index];
-
-    //             modelData.mesh.vertices.push_back({pos, 0.0f, normal, 0.0f, color, 0.0f, matID});
-    //             modelData.mesh.indices.push_back(static_cast<uint32_t>(modelData.mesh.indices.size()));
-    //         }
-
-    //         indexOffset += fv;
-
-    //         std::cout << "Face " << f << ", Material ID: " << matID << std::endl;
-    //     }
-    // }
-
-    // std::cout<< "Loaded OBJ file: " << path << " with " << modelData.mesh.vertices.size() << " vertices and " << modelData.mesh.indices.size() << " indices." << std::endl;
-
-    // std::cout << "Materials loaded: " << materials.size() << std::endl;
-
-    // return modelData;
 }
