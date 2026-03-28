@@ -2,7 +2,7 @@
 #include <array>
 
 
-DescriptorBundle createSceneDescriptorSet(VkDevice device, VkAccelerationStructureKHR tlas, VkBuffer cameraBuffer, const SceneGPUResources& resources)
+DescriptorBundle createSceneDescriptorSet(VkDevice device, VkAccelerationStructureKHR tlas, VkBuffer cameraBuffer, const SceneGPUResources& resources, const std::vector<Texture>& textures)
 {
     DescriptorBundle db;
 
@@ -51,7 +51,15 @@ DescriptorBundle createSceneDescriptorSet(VkDevice device, VkAccelerationStructu
     accumImgBinding.descriptorCount = 1;
     accumImgBinding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 
-    std::array<VkDescriptorSetLayoutBinding, 7> bindings = { asBinding, imgBinding, cameraBufferBinding, vertexBufferBinding, indexBufferBinding, materialBufferBinding, accumImgBinding };
+    const uint32_t maxTextureCount = 64;
+
+    VkDescriptorSetLayoutBinding textureBinding{};
+    textureBinding.binding = 7;
+    textureBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    textureBinding.descriptorCount = maxTextureCount; // Avoid zero descriptor count
+    textureBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+
+    std::array<VkDescriptorSetLayoutBinding, 8> bindings = { asBinding, imgBinding, cameraBufferBinding, vertexBufferBinding, indexBufferBinding, materialBufferBinding, accumImgBinding, textureBinding };
 
     VkDescriptorSetLayoutCreateInfo tlasLayoutInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
     tlasLayoutInfo.bindingCount = (uint32_t)bindings.size();
@@ -63,7 +71,7 @@ DescriptorBundle createSceneDescriptorSet(VkDevice device, VkAccelerationStructu
     VkDescriptorPool tlasDescriptorPool;
     VkDescriptorSet tlasDescriptorSet;
 
-    std::array<VkDescriptorPoolSize, 7> poolSizes{};
+    std::array<VkDescriptorPoolSize, 8> poolSizes{};
     poolSizes[0] = { VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1 };
     poolSizes[1] = { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 };
     poolSizes[2] = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 };
@@ -71,6 +79,7 @@ DescriptorBundle createSceneDescriptorSet(VkDevice device, VkAccelerationStructu
     poolSizes[4] = { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 };
     poolSizes[5] = { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 };
     poolSizes[6] = { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 };
+    poolSizes[7] = { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, textures.size() > 0 ? static_cast<uint32_t>(textures.size()) : 1 };
 
     VkDescriptorPoolCreateInfo poolInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
     poolInfo.maxSets = 1;
@@ -93,11 +102,9 @@ DescriptorBundle createSceneDescriptorSet(VkDevice device, VkAccelerationStructu
     return db;
 }
 
-void updateSceneDescriptors(VkDevice device, VkDescriptorSet descriptorSet, const SceneGPUResources& resources, VkAccelerationStructureKHR tlas, VkImageView rtImageView, VkImageView accumImageView, VkBuffer cameraBuffer)
+void updateSceneDescriptors(VkDevice device, VkDescriptorSet descriptorSet, const SceneGPUResources& resources, VkAccelerationStructureKHR tlas, VkImageView rtImageView, VkImageView accumImageView, VkBuffer cameraBuffer, const std::vector<Texture>& textures)
 {
-    VkWriteDescriptorSetAccelerationStructureKHR asInfo{
-        VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR
-    };
+    VkWriteDescriptorSetAccelerationStructureKHR asInfo{ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR };
     asInfo.accelerationStructureCount = 1;
     asInfo.pAccelerationStructures = &tlas;
 
@@ -179,7 +186,33 @@ void updateSceneDescriptors(VkDevice device, VkDescriptorSet descriptorSet, cons
     accumImgWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
     accumImgWrite.pImageInfo = &accumImageInfo;
 
-    std::array<VkWriteDescriptorSet, 7> writes = { asWrite, imgWrite, cameraDescriptorWrite, vertexBufferWrite, indexBufferWrite, materialBufferWrite, accumImgWrite };
+    std::vector<VkDescriptorImageInfo> textureImageInfos;
+
+    for(auto& tex : textures)
+    {
+        VkDescriptorImageInfo texInfo{};
+        texInfo.imageView = tex.imageView;
+        texInfo.sampler = tex.sampler;
+        texInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        textureImageInfos.push_back(texInfo);
+    }
+
+    std::vector<VkWriteDescriptorSet> writes = { asWrite, imgWrite, cameraDescriptorWrite, vertexBufferWrite, indexBufferWrite, materialBufferWrite, accumImgWrite };
+
+    if(!textureImageInfos.empty())
+    {
+        VkWriteDescriptorSet textureWrite{ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+        textureWrite.dstSet = descriptorSet;
+        textureWrite.dstBinding = 7;
+        textureWrite.descriptorCount = static_cast<uint32_t>(textureImageInfos.size() > 0 ? textureImageInfos.size() : 1); // Avoid zero descriptor count
+        textureWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        textureWrite.pImageInfo = textureImageInfos.data();
+        textureWrite.dstArrayElement = 0;
+
+        writes.push_back(textureWrite);
+    }
+
     vkUpdateDescriptorSets(device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
 }
 

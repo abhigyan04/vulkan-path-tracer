@@ -1,10 +1,13 @@
 #version 460
 #extension GL_EXT_ray_tracing : require
+#extension GL_EXT_nonuniform_qualifier : require
 
 struct Vertex
 {
     vec4 position;
     vec4 normal;
+    vec2 uv;
+    vec2 pad;
     uvec4 materialID;
 };
 
@@ -13,6 +16,7 @@ struct Material
     vec4 diffuse;
     vec4 specular;
     vec4 emissive;
+    uvec4 textureInfo; // x: hasTexture, y: textureIndex, zw: padding
 };
 
 layout(std430, set = 0, binding = 3) buffer VertexBuffer
@@ -29,6 +33,9 @@ layout(std430, set = 0, binding = 5) buffer MaterialBuffer
 {
     Material materials[];
 };
+
+#define MAX_TEXTURES 64
+layout(set = 0, binding = 7) uniform sampler2D textures[MAX_TEXTURES];
 
 layout(set = 0, binding = 0) uniform accelerationStructureEXT tlas;
 
@@ -84,10 +91,18 @@ void main()
     float v = attributes.y;
     float w = 1.0 - u - v;
 
+    vec2 uv = w * v0.uv + u * v1.uv + v * v2.uv;
+
     uint matID = v0.materialID.x;
     Material mat = materials[matID];
 
     vec3 baseColor = clamp(mat.diffuse.xyz, 0.0, 1.0);
+
+    if(mat.textureInfo.x == 1 && mat.textureInfo.y < MAX_TEXTURES)
+    {
+        baseColor = texture(textures[nonuniformEXT(mat.textureInfo.y)], uv).rgb;
+    }
+
     vec3 emissiveColor = clamp(mat.emissive.xyz, 0.0, 1.0);
 
     if(length(emissiveColor) > 0.0)

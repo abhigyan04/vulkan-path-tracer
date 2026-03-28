@@ -23,4 +23,5 @@ SceneGPUResources uploadSceneToGPU(VkDevice device, VkPhysicalDevice physicalDev
 void endSingleTimeCommands(VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, VkCommandBuffer commandBuffer);
 VkCommandBuffer beginSingleTimeCommands(VkDevice device, VkCommandPool commandPool);
 void copyBuffer(VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-void destroySceneGPU(VkDevice device, SceneGPUResources& r);
+void destroySceneGPU(VkDevice device, SceneGPUResources& r, std::vector<Texture>& textures);
+void createImage(VkDevice device, VkPhysicalDevice physicalDevice, int width, int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& memory);

@@ -12,7 +12,7 @@ newmtl floatplane
 	Kd 0.5880 0.5880 0.5880
 	Ks 0.0000 0.0000 0.0000
 	Ke 0.0000 0.0000 0.0000
-	map_Ka C:\Users\hunte\Desktop\floatplane\textures\floatplane_Albedo.png
-	map_Kd C:\Users\hunte\Desktop\floatplane\textures\floatplane_Albedo.png
-	map_bump C:\Users\hunte\Desktop\floatplane\textures\floatplane_Normal.png
-	bump C:\Users\hunte\Desktop\floatplane\textures\floatplane_Normal.png
+	map_Ka textures/floatplane_Albedo.png
+	map_Kd textures/floatplane_Albedo.png
+	map_bump textures/floatplane_Normal.png
+	bump textures/floatplane_Normal.png

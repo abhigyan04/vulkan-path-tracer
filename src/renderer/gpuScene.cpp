@@ -140,6 +140,44 @@ void copyBuffer(
     vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
+void createImage(VkDevice device, VkPhysicalDevice physicalDevice, int width, int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& memory)
+{
+    VkImageCreateInfo rtImageCreateInfo{};
+    rtImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    rtImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+    rtImageCreateInfo.extent.width = width;
+    rtImageCreateInfo.extent.height = height;
+    rtImageCreateInfo.extent.depth = 1;
+    rtImageCreateInfo.mipLevels = 1;
+    rtImageCreateInfo.arrayLayers = 1;
+    rtImageCreateInfo.format = format;
+    rtImageCreateInfo.tiling = tiling;
+    rtImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    rtImageCreateInfo.usage = usage;
+    rtImageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    rtImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateImage(device, &rtImageCreateInfo, nullptr, &image) != VK_SUCCESS) {
+        std::cerr << "Failed to create ray tracing output image!" << std::endl;
+    }
+
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(device, image, &memRequirements);
+
+    VkMemoryAllocateInfo memoryAllocInfo{};
+    memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    memoryAllocInfo.allocationSize = memRequirements.size;
+    memoryAllocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
+
+    if (vkAllocateMemory(device, &memoryAllocInfo, nullptr, &memory) != VK_SUCCESS) {
+        std::cerr << "Failed to allocate memory for ray tracing output image!" << std::endl;
+    }
+
+    vkBindImageMemory(device, image, memory, 0);
+
+    std::cout<<"Texture image created successfully! \n";
+}
+
 SceneGPUResources uploadSceneToGPU(VkDevice device, VkPhysicalDevice physicalDevice, const SceneData& scene)
 {
     SceneGPUResources resources{};
@@ -206,7 +244,7 @@ SceneGPUResources uploadSceneToGPU(VkDevice device, VkPhysicalDevice physicalDev
     return resources;
 }
 
-void destroySceneGPU(VkDevice device, SceneGPUResources& r)
+void destroySceneGPU(VkDevice device, SceneGPUResources& r, std::vector<Texture>& textures)
 {
     vkDestroyBuffer(device, r.vertexBuffer, nullptr);
     vkFreeMemory(device, r.vertexBufferMemory, nullptr);
@@ -216,4 +254,9 @@ void destroySceneGPU(VkDevice device, SceneGPUResources& r)
 
     vkDestroyBuffer(device, r.materialBuffer, nullptr);
     vkFreeMemory(device, r.materialBufferMemory, nullptr);
+
+    for (auto& tex : textures)
+    {
+        tex.destroy(device);
+    }
 }

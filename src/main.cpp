@@ -12,7 +12,7 @@
 #include <glm/trigonometric.hpp>
 #include <glm/ext/quaternion_geometric.hpp>
 
-#include "tinyobjloader/tiny_obj_loader.h"
+#include "tiny_obj_loader.h"
 #include "renderer/scene.hpp"
 #include "renderer/gpuScene.hpp"
 #include "renderer/acceleration.hpp"
@@ -198,7 +198,7 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos)
     yOffset *= sensitivity;
 
     yaw += xOffset;
-    pitch += yOffset;
+    pitch -= yOffset;
 
     if(pitch > 89.0f)
         pitch = 89.0f;
@@ -206,6 +206,7 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos)
     if(pitch < -89.0f)
         pitch = -89.0f;
     
+    pitch = glm::clamp(pitch, -89.0f, 89.0f);
 }
 
 int main(){
@@ -314,8 +315,15 @@ int main(){
     accelerationStructureFeatures.accelerationStructure = VK_TRUE;
     accelerationStructureFeatures.pNext = &rayTracingPipelineFeatures;
 
+    // VkPhysicalDeviceVulkan12Features vulkan12Features{};
+    // vulkan12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_12_FEATURES;
+    // vulkan12Features.runtimeDescriptorArray = VK_TRUE;
+    // vulkan12Features.descriptorBindingVariableDescriptorCount = VK_TRUE;
+    // vulkan12Features.descriptorBindingPartiallyBound = VK_TRUE;
+
     VkDeviceCreateInfo deviceCreateInfo{};
     deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    // deviceCreateInfo.pNext = &vulkan12Features;
     deviceCreateInfo.pNext = &accelerationStructureFeatures;
     deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
     deviceCreateInfo.queueCreateInfoCount = 1;
@@ -845,17 +853,17 @@ int main(){
     vkUnmapMemory(device, cameraBufferMemory);
 
     // Load model
-    SceneData scene = loadOBJ("assets/CornellBox-Original.obj");
-    // SceneData scene = loadOBJ("assets/bunny.obj");
-    // SceneData scene = loadOBJ("assets/floatplane.obj");
+    SceneData scene = loadOBJ(device, physicalDevice, commandPool, graphicsQueue, "assets/CornellBox-Original.obj");
+    // SceneData scene = loadOBJ(device, physicalDevice, commandPool, graphicsQueue, "assets/bunny.obj");
+    // SceneData scene = loadOBJ(device, physicalDevice, commandPool, graphicsQueue, "assets/floatplane.obj");
 
     SceneGPUResources gpuScene = uploadSceneToGPU(device, physicalDevice, scene);
 
     AccelerationStructures accel = buildAccelerationStructures(device, physicalDevice, commandPool, graphicsQueue, scene, gpuScene);
     
-    DescriptorBundle descriptors = createSceneDescriptorSet(device, accel.tlas, cameraBuffer, gpuScene);
+    DescriptorBundle descriptors = createSceneDescriptorSet(device, accel.tlas, cameraBuffer, gpuScene, scene.textures);
 
-    updateSceneDescriptors(device, descriptors.set, gpuScene, accel.tlas, rtImageView, accumImageView, cameraBuffer);
+    updateSceneDescriptors(device, descriptors.set, gpuScene, accel.tlas, rtImageView, accumImageView, cameraBuffer, scene.textures);
 
     RTPipeline pipeline = createRayTracingPipeline(device, descriptors.layout);
 
@@ -897,7 +905,7 @@ int main(){
         glm::vec3 oldPos = camera.position;
         glm::vec3 oldForward = camera.forward;
 
-        float speed = 0.0005f;
+        float speed = 0.005f;
 
         if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
             camera.position += camera.forward * speed;
@@ -991,7 +999,7 @@ int main(){
     destroyPipeline(device, pipeline);
     destroyDescriptors(device, descriptors);
     destroyAccelerationStructures(device, accel);
-    destroySceneGPU(device, gpuScene);
+    destroySceneGPU(device, gpuScene, scene.textures);
 
     if(rtImageView) {
         vkDestroyImageView(device, rtImageView, nullptr);
