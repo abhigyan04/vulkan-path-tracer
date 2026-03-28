@@ -47,7 +47,7 @@ void recordCommandBuffer(VkDevice device, VkCommandBuffer commandBuffer, uint32_
 
     vkCmdPushConstants(commandBuffer,
         pipelineLayout,
-        VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+        VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
         0,
         sizeof(PushConstants),
         &pushConstants);

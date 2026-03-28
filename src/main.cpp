@@ -833,7 +833,7 @@ int main(){
 
     Camera camera;
 
-    camera.position = glm::vec3(0,1,4);
+    camera.position = glm::vec3(0,1,2.5);
     camera.forward  = glm::normalize(glm::vec3(0, 1, 0) - camera.position);
     camera.right    = glm::normalize(glm::cross(camera.forward, glm::vec3(0,1,0)));
     camera.up       = glm::normalize(glm::cross(camera.right, camera.forward));
@@ -844,8 +844,10 @@ int main(){
     memcpy(cameraData, &camera, sizeof(Camera));
     vkUnmapMemory(device, cameraBufferMemory);
 
-    //Load model
+    // Load model
     SceneData scene = loadOBJ("assets/CornellBox-Original.obj");
+    // SceneData scene = loadOBJ("assets/bunny.obj");
+    // SceneData scene = loadOBJ("assets/floatplane.obj");
 
     SceneGPUResources gpuScene = uploadSceneToGPU(device, physicalDevice, scene);
 

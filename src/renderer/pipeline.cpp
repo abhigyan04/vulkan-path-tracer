@@ -44,7 +44,7 @@ RTPipeline createRayTracingPipeline(VkDevice device, VkDescriptorSetLayout descr
     RTPipeline rtPipeline;
 
     VkPushConstantRange pushConstantRange{};
-    pushConstantRange.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
     pushConstantRange.offset = 0;
     pushConstantRange.size = sizeof(PushConstants);
 
@@ -153,7 +153,7 @@ RTPipeline createRayTracingPipeline(VkDevice device, VkDescriptorSetLayout descr
     pipelineInfo.pStages = shaderStages;
     pipelineInfo.groupCount = (uint32_t)std::size(shaderGroups);
     pipelineInfo.pGroups = shaderGroups;
-    pipelineInfo.maxPipelineRayRecursionDepth = 2;
+    pipelineInfo.maxPipelineRayRecursionDepth = 4;
     pipelineInfo.layout = pipelineLayout;
 
     if (vkCreateRayTracingPipelinesKHR(device, VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &rayTracingPipeline) != VK_SUCCESS) {
