@@ -2,7 +2,9 @@
 
 A physically-based path tracer built from scratch using Vulkan ray tracing extensions, implementing global illumination, soft shadows, and Monte Carlo light transport on the GPU.
 
-![Render](assets/vulkan_pt.gif)
+<p align="center">
+  <img src="assets/vulkan_pt.gif" alt="Render" />
+</p>
 
 ---
 
