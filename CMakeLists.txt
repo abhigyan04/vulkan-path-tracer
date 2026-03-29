@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(VULKAN_RT)
+project(vulkan-path-tracer)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -23,7 +23,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(glfw)
 
-add_executable(VULKAN_RT
+add_executable(vulkan-path-tracer
     src/main.cpp
     src/loader/objLoader.cpp
     src/loader/objLoader.hpp
@@ -43,14 +43,14 @@ add_executable(VULKAN_RT
     src/renderer/scene.hpp
 )
 
-target_include_directories(VULKAN_RT PRIVATE
+target_include_directories(vulkan-path-tracer PRIVATE
     "${VULKAN_SDK}/Include",
     include
 )
 
-target_link_libraries(VULKAN_RT PRIVATE
+target_link_libraries(vulkan-path-tracer PRIVATE
     "${VULKAN_SDK}/Lib/vulkan-1.lib"
     glfw
 )
 
-target_compile_definitions(VULKAN_RT PRIVATE GLFW_INCLUDE_NONE)
+target_compile_definitions(vulkan-path-tracer PRIVATE GLFW_INCLUDE_NONE)
