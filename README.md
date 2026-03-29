@@ -1,89 +1,99 @@
-Vulkan Path Tracer
+# Vulkan Path Tracer
 
 A physically-based path tracer built from scratch using Vulkan ray tracing extensions, implementing global illumination, soft shadows, and Monte Carlo light transport on the GPU.
 
 ![Render](assets/vulkan_pt.gif)
 
-Features
+---
 
-Vulkan Ray Tracing Pipeline
-    Built using VK_KHR_ray_tracing_pipeline
-    Hardware-accelerated BVH traversal (TLAS / BLAS)
-    Custom Shader Binding Table (SBT)
+## Features
 
-Physically-Based Rendering
-    Global illumination (indirect diffuse bounces)
-    Soft shadows via area light sampling
-    Recursive reflections
+### Vulkan Ray Tracing Pipeline
+- Built using `VK_KHR_ray_tracing_pipeline`
+- Hardware-accelerated BVH traversal (TLAS / BLAS)
+- Custom Shader Binding Table (SBT)
 
-Monte Carlo Path Tracing
-    Cosine-weighted hemisphere sampling
-    Progressive frame accumulation
-    Stochastic sampling with per-pixel random seeds
+### Physically-Based Rendering
+- Global illumination (indirect diffuse bounces)
+- Soft shadows via area light sampling
+- Recursive reflections
 
-Materials & Assets
-    OBJ + MTL loading
-    Per-vertex material system
-    Texture support via descriptor arrays
+### Monte Carlo Path Tracing
+- Cosine-weighted hemisphere sampling
+- Progressive frame accumulation
+- Stochastic sampling with per-pixel random seeds
 
-Technical Highlights
+### Materials & Assets
+- OBJ + MTL loading
+- Per-vertex material system
+- Texture support via descriptor arrays
 
-Multi-ray system (primary, shadow, indirect rays)
-Multiple payloads and miss shaders
-Correct SBT alignment (shaderGroupHandleAlignment, shaderGroupBaseAlignment)
-GPU-friendly memory layout (std430-safe structs)
-Explicit Vulkan synchronization and image layout management
+---
 
-Tech Stack
+## Technical Highlights
 
-Language: C++
-Graphics API: Vulkan (Ray Tracing Extensions)
-Shaders: GLSL → SPIR-V
-Math: GLM
+- Multi-ray system (primary, shadow, indirect rays)
+- Multiple payloads and miss shaders
+- Correct SBT alignment (`shaderGroupHandleAlignment`, `shaderGroupBaseAlignment`)
+- GPU-friendly memory layout (`std430`-safe structs)
+- Explicit Vulkan synchronization and image layout management
 
-Build & Run
+---
 
-Requirements
-    Vulkan SDK (1.3+)
-    GPU with ray tracing support (RTX / RDNA2+)
-    CMake
+## Tech Stack
 
-Build
-    git clone https://github.com/abhigyan04/vulkan-path-tracer.git
-    cd vulkan-path-tracer
-    mkdir build
-    cd build
-    cmake ..
-    make
+| Component     | Technology                        |
+|---------------|-----------------------------------|
+| Language      | C++                               |
+| Graphics API  | Vulkan (Ray Tracing Extensions)   |
+| Shaders       | GLSL → SPIR-V                     |
+| Math          | GLM                               |
 
-Run
-    ./build/vulkan-path-tracer.exe
+---
 
-Challenges & Learnings
+## Build & Run
 
-Debugging GPU-side issues with minimal feedback (black frames, device loss)
-Matching CPU ↔ GPU memory layouts (struct alignment bugs)
-Correctly configuring Shader Binding Table regions and indexing
-Managing descriptor sets and texture bindings in Vulkan
-Implementing unbiased sampling while controlling noise
+### Requirements
+- Vulkan SDK 1.3+
+- GPU with ray tracing support (RTX / RDNA2+)
+- CMake
 
-Future Improvements
+### Build
+```bash
+git clone https://github.com/abhigyan04/vulkan-path-tracer.git
+cd vulkan-path-tracer
+mkdir build && cd build
+cmake ..
+make
+```
 
-Multiple Importance Sampling (MIS)
-Physically-based BRDFs (GGX / PBR)
-HDR environment lighting
-Denoising & temporal stability
-Performance optimizations (sampling + traversal)
+### Run
+```bash
+./build/vulkan-path-tracer.exe
+```
 
-Key Takeaway
+---
 
-This project demonstrates a deep understanding of:
-    Low-level GPU programming
-    Ray tracing architecture
-    Physically-based rendering
-    Debugging complex graphics pipelines
+## Challenges & Learnings
 
-Acknowledgements
+- Debugging GPU-side issues with minimal feedback (black frames, device loss)
+- Matching CPU ↔ GPU memory layouts (struct alignment bugs)
+- Correctly configuring Shader Binding Table regions and indexing
+- Managing descriptor sets and texture bindings in Vulkan
+- Implementing unbiased sampling while controlling noise
+
+---
+
+## Future Improvements
+
+- [ ] Multiple Importance Sampling (MIS)
+- [ ] Physically-based BRDFs (GGX / PBR)
+- [ ] HDR environment lighting
+- [ ] Denoising & temporal stability
+- [ ] Performance optimizations (sampling + traversal)
+
+---
+
+## Acknowledgements
 
 Inspired by real-time rendering techniques and physically-based path tracing principles.
-
