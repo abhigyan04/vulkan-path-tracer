@@ -1,6 +1,5 @@
 #version 460
 #extension GL_EXT_ray_tracing : require
-#extension GL_EXT_nonuniform_qualifier : require
 
 struct Vertex
 {
@@ -69,10 +68,22 @@ vec3 randomHemisphere(vec3 normal, vec2 xi)
     float cosTheta = sqrt(1.0 - xi.y);
     float sinTheta = sqrt(xi.y);
 
-    vec3 tangent = normalize(abs(normal.x) > 0.1 ? cross(vec3(0, 1, 0), normal) : cross(vec3(1, 0, 0), normal));
+    float x = sinTheta * cos(phi);
+    float y = sinTheta * sin(phi);
+    float z = sqrt(max(0.0, 1.0 - xi.y));
+
+    vec3 tangent = normalize(
+        abs(normal.x) > 0.1
+            ? cross(vec3(0, 1, 0), normal)
+            : cross(vec3(1, 0, 0), normal)
+    );
+
     vec3 bitangent = cross(normal, tangent);
 
-    return normalize(tangent * cos(phi) * sinTheta + bitangent * sin(phi) * sinTheta + normal * cosTheta);
+    // vec3 tangent = normalize(abs(normal.x) > 0.1 ? cross(vec3(0, 1, 0), normal) : cross(vec3(1, 0, 0), normal));
+    // vec3 bitangent = cross(normal, tangent);
+
+    return normalize(tangent * x + bitangent * y + normal * z);
 }
 
 void main()
@@ -100,7 +111,7 @@ void main()
 
     if(mat.textureInfo.x == 1 && mat.textureInfo.y < MAX_TEXTURES)
     {
-        baseColor = texture(textures[nonuniformEXT(mat.textureInfo.y)], uv).rgb;
+        baseColor = texture(textures[mat.textureInfo.y], uv).rgb;
     }
 
     vec3 emissiveColor = clamp(mat.emissive.xyz, 0.0, 1.0);
@@ -127,6 +138,7 @@ void main()
     vec3 origin = hitPosition + faceNormal * RAY_BIAS;
 
     vec3 lightPosition = vec3(0, 1.9, 0);
+    // vec3 lightPosition = vec3(-2.8, 102, 29);
     vec3 lightU = vec3(0.25, 0, 0);
     vec3 lightV = vec3(0, 0, 0.25);
     vec3 lightNormal = vec3(0, -1, 0);
@@ -173,7 +185,7 @@ void main()
     // Reflection Ray
     vec3 reflectedColor = vec3(0.0);
 
-    float reflectivity = 0.1;
+    float reflectivity = 0.02;
 
     if(payload.depth < 1)
     {
@@ -202,7 +214,7 @@ void main()
     //Indirect ray
     vec3 indirectColor = vec3(0.0);
 
-    if(payload.depth < 1)
+    if(payload.depth < 2)
     {
         vec2 xi = vec2(rand(seed + vec2(2.1, 3.7)), rand(seed + vec2(4.3, 1.9)));
 
@@ -226,12 +238,14 @@ void main()
             1
         );
 
-        float NdotB = max(dot(shadingNormal, bouncedDirection), 0.0);
+        // float NdotB = max(dot(shadingNormal, bouncedDirection), 0.0);
 
-        indirectColor = indirectPayload.color * baseColor * NdotB;
+        indirectColor = indirectPayload.color * baseColor * 1.2 /** NdotB*/;
     }
     
     vec3 color = ambient + diffuse + reflectedColor * reflectivity + indirectColor * 0.3;
+
+    color = clamp(color, vec3(0.0), vec3(5.0));
  
     payload.color = color;
     return;

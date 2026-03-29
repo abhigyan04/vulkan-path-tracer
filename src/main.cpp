@@ -315,15 +315,8 @@ int main(){
     accelerationStructureFeatures.accelerationStructure = VK_TRUE;
     accelerationStructureFeatures.pNext = &rayTracingPipelineFeatures;
 
-    // VkPhysicalDeviceVulkan12Features vulkan12Features{};
-    // vulkan12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_12_FEATURES;
-    // vulkan12Features.runtimeDescriptorArray = VK_TRUE;
-    // vulkan12Features.descriptorBindingVariableDescriptorCount = VK_TRUE;
-    // vulkan12Features.descriptorBindingPartiallyBound = VK_TRUE;
-
     VkDeviceCreateInfo deviceCreateInfo{};
     deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    // deviceCreateInfo.pNext = &vulkan12Features;
     deviceCreateInfo.pNext = &accelerationStructureFeatures;
     deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
     deviceCreateInfo.queueCreateInfoCount = 1;
@@ -841,7 +834,8 @@ int main(){
 
     Camera camera;
 
-    camera.position = glm::vec3(0,1,2.5);
+    camera.position = glm::vec3(0, 1, 5);
+    // camera.position = glm::vec3(-26, 45, 140);
     camera.forward  = glm::normalize(glm::vec3(0, 1, 0) - camera.position);
     camera.right    = glm::normalize(glm::cross(camera.forward, glm::vec3(0,1,0)));
     camera.up       = glm::normalize(glm::cross(camera.right, camera.forward));
@@ -905,7 +899,7 @@ int main(){
         glm::vec3 oldPos = camera.position;
         glm::vec3 oldForward = camera.forward;
 
-        float speed = 0.005f;
+        float speed = 0.0005f;
 
         if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
             camera.position += camera.forward * speed;
