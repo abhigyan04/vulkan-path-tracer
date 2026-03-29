@@ -1,0 +1,55 @@
+# Build directories
+build/
+Build/
+cmake_build/
+out/
+dist/
+bin/
+Debug/
+Release/
+x64/
+x86/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.vcxproj.user
+*.sln.user
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Compiled binaries and libraries
+*.o
+*.a
+*.so
+*.dll
+*.exe
+*.lib
+*.dylib
+*.spv
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Vulkan SDK
+VulkanSDK/
+
+# Dependencies and third-party
+third_party/
+external/
+lib/
+include/
+
+# Temporary files
+*.tmp
+*.log
+*.pdb
+
+# OS specific
+Thumbs.db
+.DS_Store
