@@ -4,6 +4,11 @@ Build/
 cmake_build/
 out/
 dist/
+bin/
+Debug/
+Release/
+x64/
+x86/
 
 # IDE and editor files
 .vscode/
@@ -23,6 +28,7 @@ dist/
 *.exe
 *.lib
 *.dylib
+.spv
 
 # CMake
 CMakeCache.txt
