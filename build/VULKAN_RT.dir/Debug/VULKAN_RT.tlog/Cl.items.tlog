@@ -1,8 +1,0 @@
-C:\Users\abhig\Downloads\Vulkan_RT\src\main.cpp;C:\Users\abhig\Downloads\Vulkan_RT\build\VULKAN_RT.dir\Debug\main.obj
-C:\Users\abhig\Downloads\Vulkan_RT\src\loader\objLoader.cpp;C:\Users\abhig\Downloads\Vulkan_RT\build\VULKAN_RT.dir\Debug\objLoader.obj
-C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\acceleration.cpp;C:\Users\abhig\Downloads\Vulkan_RT\build\VULKAN_RT.dir\Debug\acceleration.obj
-C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\commands.cpp;C:\Users\abhig\Downloads\Vulkan_RT\build\VULKAN_RT.dir\Debug\commands.obj
-C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\descriptors.cpp;C:\Users\abhig\Downloads\Vulkan_RT\build\VULKAN_RT.dir\Debug\descriptors.obj
-C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\gpuScene.cpp;C:\Users\abhig\Downloads\Vulkan_RT\build\VULKAN_RT.dir\Debug\gpuScene.obj
-C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\pipeline.cpp;C:\Users\abhig\Downloads\Vulkan_RT\build\VULKAN_RT.dir\Debug\pipeline.obj
-C:\Users\abhig\Downloads\Vulkan_RT\src\renderer\sbt.cpp;C:\Users\abhig\Downloads\Vulkan_RT\build\VULKAN_RT.dir\Debug\sbt.obj
