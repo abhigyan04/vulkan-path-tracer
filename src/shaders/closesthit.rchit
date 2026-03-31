@@ -44,11 +44,6 @@ struct RayPayload
     int depth;
 };
 
-float rand(vec2 co)
-{
-    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-}
-
 layout(push_constant) uniform PushConstants
 {
     uint frame;
@@ -60,11 +55,40 @@ layout(location = 2) rayPayloadEXT float shadowPayload;
 
 hitAttributeEXT vec2 attributes;
 
+const float PI = 3.14159265359;
 const float RAY_BIAS = 0.001;
 
-vec3 randomHemisphere(vec3 normal, vec2 xi)
+uint pcg(uint inputValue)
 {
-    float phi = 2.0 * 3.14159265359 * xi.x;
+    uint state = inputValue * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
+float rand(inout uint rngState)
+{
+    rngState = pcg(rngState);
+    return float(rngState) / 4294967295.0;
+}
+
+uint initRng(uvec2 pixel, uint frame, uint primitiveID, uint bounce)
+{
+    uint seed = pixel.x;
+    seed ^= pixel.y * 1664525u;
+    seed ^= frame * 1013904223u;
+    seed ^= primitiveID * 2246822519u;
+    seed ^= bounce * 3266489917u;
+    return pcg(seed);
+}
+
+vec3 buildTangent(vec3 n)
+{
+    return normalize(abs(n.x) > 0.1 ? cross(vec3(0, 1, 0), n) : cross(vec3(1, 0, 0), n));
+}
+
+vec3 cosineWeightedHemisphere(vec3 normal, vec2 xi)
+{
+    float phi = 2.0 * PI * xi.x;
     float cosTheta = sqrt(1.0 - xi.y);
     float sinTheta = sqrt(xi.y);
 
@@ -72,16 +96,8 @@ vec3 randomHemisphere(vec3 normal, vec2 xi)
     float y = sinTheta * sin(phi);
     float z = sqrt(max(0.0, 1.0 - xi.y));
 
-    vec3 tangent = normalize(
-        abs(normal.x) > 0.1
-            ? cross(vec3(0, 1, 0), normal)
-            : cross(vec3(1, 0, 0), normal)
-    );
-
+    vec3 tangent = buildTangent(normal);
     vec3 bitangent = cross(normal, tangent);
-
-    // vec3 tangent = normalize(abs(normal.x) > 0.1 ? cross(vec3(0, 1, 0), normal) : cross(vec3(1, 0, 0), normal));
-    // vec3 bitangent = cross(normal, tangent);
 
     return normalize(tangent * x + bitangent * y + normal * z);
 }
@@ -132,28 +148,28 @@ void main()
 
     shadingNormal = faceforward(shadingNormal, gl_WorldRayDirectionEXT, faceNormal);
 
-    vec3 geometricNormal = faceNormal;
+    //RNG Seed
+    uint rngState = initRng(uvec2(gl_LaunchIDEXT.xy), pushConstants.frame, triIndex, uint(payload.depth));
 
-    //Shadow Ray
-    vec3 origin = hitPosition + faceNormal * RAY_BIAS;
-
-    vec3 lightPosition = vec3(0, 1.9, 0);
-    // vec3 lightPosition = vec3(-2.8, 102, 29);
+    //Area light
+    vec3 lightCenter = vec3(0, 1.9, 0);
+    // vec3 lightCenter = vec3(-2.8, 102, 29);
     vec3 lightU = vec3(0.25, 0, 0);
     vec3 lightV = vec3(0, 0, 0.25);
     vec3 lightNormal = vec3(0, -1, 0);
 
-    vec2 seed = vec2(gl_LaunchIDEXT.xy) + vec2(float(pushConstants.frame), float(gl_PrimitiveID));
+    vec2 lightXi = vec2(rand(rngState), rand(rngState));
 
-    vec2 xi = vec2(rand(seed + vec2(0.13, 0.71)), rand(seed + vec2(0.57, 0.29)));
-
-    vec3 sampledLightPos = lightPosition + (xi.x * 2.0 - 1.0) * lightU + (xi.y * 2.0 - 1.0) * lightV;
+    vec3 sampledLightPos = lightCenter + (lightXi.x * 2.0 - 1.0) * lightU + (lightXi.y * 2.0 - 1.0) * lightV;
 
     vec3 toLight = sampledLightPos - hitPosition;
 
     float lightDistance = length(toLight);
     
     vec3 lightDirection = normalize(toLight);
+
+    //Shadow Ray
+    vec3 shadowOrigin = hitPosition + faceNormal * RAY_BIAS;
 
     shadowPayload = 0.0;
 
@@ -163,7 +179,7 @@ void main()
         gl_RayFlagsOpaqueEXT,
         0xFF,
         1, 0, 1,
-        origin,
+        shadowOrigin,
         RAY_BIAS,
         lightDirection,
         max(lightDistance - RAY_BIAS, RAY_BIAS),
@@ -178,14 +194,14 @@ void main()
 
     float lightAttenuation = 1.0 / max(lightDistance * lightDistance, 1e-4);
 
-    vec3 ambient = baseColor * 0.02;
+    vec3 directLight = baseColor * NdotL * visibility * LdotNl * lightAttenuation * 8.0;
 
-    vec3 diffuse = baseColor * NdotL * visibility * LdotNl * lightAttenuation * 8.0;
+    vec3 ambient = baseColor * 0.005;
 
     // Reflection Ray
     vec3 reflectedColor = vec3(0.0);
 
-    float reflectivity = 0.02;
+    float reflectivity = 0.05;
 
     if(payload.depth < 1)
     {
@@ -216,9 +232,9 @@ void main()
 
     if(payload.depth < 2)
     {
-        vec2 xi = vec2(rand(seed + vec2(2.1, 3.7)), rand(seed + vec2(4.3, 1.9)));
+        vec2 bounceXi = vec2(rand(rngState), rand(rngState));
 
-        vec3 bouncedDirection = randomHemisphere(shadingNormal, xi);
+        vec3 bouncedDirection = cosineWeightedHemisphere(shadingNormal, bounceXi);
 
         vec3 indirectOrigin = hitPosition + shadingNormal * RAY_BIAS;
 
@@ -238,12 +254,10 @@ void main()
             1
         );
 
-        // float NdotB = max(dot(shadingNormal, bouncedDirection), 0.0);
-
-        indirectColor = indirectPayload.color * baseColor * 1.2 /** NdotB*/;
+        indirectColor = indirectPayload.color * baseColor * 1.2;
     }
     
-    vec3 color = ambient + diffuse + reflectedColor * reflectivity + indirectColor * 0.3;
+    vec3 color = ambient + directLight + indirectColor * 0.35 + reflectedColor * reflectivity;
 
     color = clamp(color, vec3(0.0), vec3(5.0));
  

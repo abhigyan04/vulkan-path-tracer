@@ -44,7 +44,7 @@ add_executable(vulkan-path-tracer
 )
 
 target_include_directories(vulkan-path-tracer PRIVATE
-    "${VULKAN_SDK}/Include",
+    "${VULKAN_SDK}/Include" ,
     include
 )
 
