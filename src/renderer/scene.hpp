@@ -24,7 +24,7 @@ struct GPUMaterial
 };
 static_assert(sizeof(GPUMaterial) == 64);
 
-struct Texture
+struct GPUTexture
 {
     std::string diffuse;
     VkImage image;
@@ -51,5 +51,5 @@ struct SceneData
 {
     MeshData mesh;
     std::vector<GPUMaterial> materials;
-    std::vector<Texture> textures;
+    std::vector<GPUTexture> textures;
 };

@@ -846,10 +846,13 @@ int main(){
     memcpy(cameraData, &camera, sizeof(Camera));
     vkUnmapMemory(device, cameraBufferMemory);
 
-    // Load model
-    SceneData scene = loadOBJ(device, physicalDevice, commandPool, graphicsQueue, "assets/CornellBox-Original.obj");
-    // SceneData scene = loadOBJ(device, physicalDevice, commandPool, graphicsQueue, "assets/bunny.obj");
-    // SceneData scene = loadOBJ(device, physicalDevice, commandPool, graphicsQueue, "assets/floatplane.obj");
+    // Load model — swap the path or extension to switch between OBJ and USD
+    const std::string scenePath = "assets/CornellBox-Original.obj";
+    // const std::string scenePath = "assets/ZetCG_ExhibitionHall.usd";
+
+    SceneData scene;
+    
+    scene = loadOBJ(device, physicalDevice, commandPool, graphicsQueue, scenePath);
 
     SceneGPUResources gpuScene = uploadSceneToGPU(device, physicalDevice, scene);
 

@@ -2,7 +2,7 @@
 #include <array>
 
 
-DescriptorBundle createSceneDescriptorSet(VkDevice device, VkAccelerationStructureKHR tlas, VkBuffer cameraBuffer, const SceneGPUResources& resources, const std::vector<Texture>& textures)
+DescriptorBundle createSceneDescriptorSet(VkDevice device, VkAccelerationStructureKHR tlas, VkBuffer cameraBuffer, const SceneGPUResources& resources, const std::vector<GPUTexture>& textures)
 {
     DescriptorBundle db;
 
@@ -102,7 +102,7 @@ DescriptorBundle createSceneDescriptorSet(VkDevice device, VkAccelerationStructu
     return db;
 }
 
-void updateSceneDescriptors(VkDevice device, VkDescriptorSet descriptorSet, const SceneGPUResources& resources, VkAccelerationStructureKHR tlas, VkImageView rtImageView, VkImageView accumImageView, VkBuffer cameraBuffer, const std::vector<Texture>& textures)
+void updateSceneDescriptors(VkDevice device, VkDescriptorSet descriptorSet, const SceneGPUResources& resources, VkAccelerationStructureKHR tlas, VkImageView rtImageView, VkImageView accumImageView, VkBuffer cameraBuffer, const std::vector<GPUTexture>& textures)
 {
     VkWriteDescriptorSetAccelerationStructureKHR asInfo{ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR };
     asInfo.accelerationStructureCount = 1;

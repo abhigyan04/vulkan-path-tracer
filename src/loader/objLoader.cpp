@@ -111,13 +111,13 @@ SceneData loadOBJ(VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPoo
         }
     }
 
-    //Textures
+    //GPUTextures
     for(size_t i = 0 ; i < materials.size() ; i++)
     {
         if(!materials[i].diffuse_texname.empty())
         {
             std::string path = baseDir + materials[i].diffuse_texname;
-            Texture tex = createTextureImage(device, physicalDevice, commandPool, graphicsQueue, path);
+            GPUTexture tex = createTextureImage(device, physicalDevice, commandPool, graphicsQueue, path);
             scene.textures.push_back(tex);
 
             scene.materials[i].textureInfo.x = 1;
@@ -128,7 +128,7 @@ SceneData loadOBJ(VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPoo
             scene.materials[i].textureInfo.x = 0;
             scene.materials[i].textureInfo.y = 0;
         }
-        std::cout<<"Material "<<i<<": hasTexture = "<<scene.materials[i].textureInfo.x<<" textureIndex = "<<scene.materials[i].textureInfo.y<<"\n";
+        std::cout<<"Material "<<i<<": hasGPUTexture = "<<scene.materials[i].textureInfo.x<<" textureIndex = "<<scene.materials[i].textureInfo.y<<"\n";
     }
 
     std::cout<<"Loaded scene: \n";
@@ -139,9 +139,9 @@ SceneData loadOBJ(VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPoo
     return scene;
 }
 
-Texture createTextureImage(VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue graphicsQueue, const std::string& path)
+GPUTexture createTextureImage(VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue graphicsQueue, const std::string& path)
 {
-    Texture tex;
+    GPUTexture tex;
 
     int width, height, channels;
     stbi_uc* pixels = stbi_load(path.c_str(), &width, &height, &channels, STBI_rgb_alpha);

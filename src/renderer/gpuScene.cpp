@@ -244,7 +244,7 @@ SceneGPUResources uploadSceneToGPU(VkDevice device, VkPhysicalDevice physicalDev
     return resources;
 }
 
-void destroySceneGPU(VkDevice device, SceneGPUResources& r, std::vector<Texture>& textures)
+void destroySceneGPU(VkDevice device, SceneGPUResources& r, std::vector<GPUTexture>& textures)
 {
     vkDestroyBuffer(device, r.vertexBuffer, nullptr);
     vkFreeMemory(device, r.vertexBufferMemory, nullptr);
