@@ -13,6 +13,9 @@ set(VULKAN_SDK $ENV{VULKAN_SDK})
 
 message(STATUS "Using Vulkan SDK at: ${VULKAN_SDK}")
 
+add_definitions(-DTRACY_ENABLE)
+add_definitions(-DTRACY_VK_USE_SYMBOL_TABLE)
+
 include(FetchContent)
 
 FetchContent_Declare(
@@ -54,3 +57,7 @@ target_link_libraries(vulkan-path-tracer PRIVATE
 )
 
 target_compile_definitions(vulkan-path-tracer PRIVATE GLFW_INCLUDE_NONE)
+
+add_subdirectory(include/tracy)
+
+target_link_libraries(vulkan-path-tracer PRIVATE TracyClient)

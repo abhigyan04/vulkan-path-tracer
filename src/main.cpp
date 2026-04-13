@@ -12,6 +12,9 @@
 #include <glm/trigonometric.hpp>
 #include <glm/ext/quaternion_geometric.hpp>
 
+#include <tracy/public/tracy/Tracy.hpp>
+#include <tracy/public/tracy/TracyVulkan.hpp>
+
 #include "tiny_obj_loader.h"
 #include "renderer/scene.hpp"
 #include "renderer/gpuScene.hpp"
@@ -342,6 +345,47 @@ int main(){
     vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
 
     std::cout << "Logical device and graphics queue created successfully!" << std::endl;
+
+    //Initialize Tracy Vulkan context
+    VkCommandPoolCreateInfo tracyCmdPoolInfo{};
+    tracyCmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    tracyCmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    tracyCmdPoolInfo.queueFamilyIndex = indices.graphicsFamily.value();
+
+    VkCommandPool tracyCommandPool;
+    if (vkCreateCommandPool(device, &tracyCmdPoolInfo, nullptr, &tracyCommandPool) != VK_SUCCESS) {
+        std::cerr << "Failed to create Tracy command pool!" << std::endl;
+        return -1;
+    }
+
+    VkCommandBufferAllocateInfo tracyCmdBufAllocInfo{};
+    tracyCmdBufAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    tracyCmdBufAllocInfo.commandPool = tracyCommandPool;
+    tracyCmdBufAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    tracyCmdBufAllocInfo.commandBufferCount = 1;
+
+    VkCommandBuffer tracyCommandBuffer;
+    if (vkAllocateCommandBuffers(device, &tracyCmdBufAllocInfo, &tracyCommandBuffer) != VK_SUCCESS) {
+        std::cerr << "Failed to allocate Tracy command buffer!" << std::endl;
+        return -1;
+    }
+
+    TracyVkCtx tracyContext = TracyVkContextCalibrated(
+        instance,
+        physicalDevice,
+        device,
+        graphicsQueue,
+        tracyCommandBuffer,
+        vkGetInstanceProcAddr,
+        vkGetDeviceProcAddr
+    );
+
+    vkFreeCommandBuffers(device, tracyCommandPool, 1, &tracyCommandBuffer);
+    if(tracyCommandPool) {
+        vkDestroyCommandPool(device, tracyCommandPool, nullptr);
+    }
+
+    std::cout << "Tracy context setup successfully!" << std::endl;
 
     //Create common command pool
     VkCommandPool commandPool;
@@ -945,7 +989,7 @@ int main(){
             frameIndex++;
         }
 
-        recordCommandBuffer(device, commandBuffers[currentFrame], frameIndex, imageIndex, pipeline.pipeline, pipeline.layout, descriptors.set, rtImage, accumImage, swapChainImages, sbt, extent, cameraMoved);
+        recordCommandBuffer(device, commandBuffers[currentFrame], frameIndex, imageIndex, pipeline.pipeline, pipeline.layout, descriptors.set, rtImage, accumImage, swapChainImages, sbt, extent, cameraMoved, tracyContext);
 
         VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
         VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_ALL_COMMANDS_BIT};
@@ -1035,6 +1079,7 @@ int main(){
             vkDestroyFence(device, inFlightFences[i], nullptr);
         }
     }
+    TracyVkDestroy(tracyContext);
     if(commandPool) {
         vkDestroyCommandPool(device, commandPool, nullptr);
     }

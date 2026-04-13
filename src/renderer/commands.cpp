@@ -4,7 +4,7 @@
 
 void recordCommandBuffer(VkDevice device, VkCommandBuffer commandBuffer, uint32_t frameIndex, uint32_t imageIndex, VkPipeline pipeline, VkPipelineLayout pipelineLayout,
     VkDescriptorSet descriptorSet,
-    VkImage rtImage, VkImage accumImage, std::vector<VkImage> swapChainImages, const SBT& sbt, VkExtent2D extent, bool cameraMoved)
+    VkImage rtImage, VkImage accumImage, std::vector<VkImage> swapChainImages, const SBT& sbt, VkExtent2D extent, bool cameraMoved, TracyVkCtx tracyContext)
 {
     auto vkCmdTraceRaysKHR =
         (PFN_vkCmdTraceRaysKHR)vkGetDeviceProcAddr(device, "vkCmdTraceRaysKHR");
@@ -52,6 +52,11 @@ void recordCommandBuffer(VkDevice device, VkCommandBuffer commandBuffer, uint32_
         sizeof(PushConstants),
         &pushConstants);
 
+    ZoneScoped;
+    
+    {
+    TracyVkZone(tracyContext, commandBuffer, "Trace Rays");
+
     vkCmdTraceRaysKHR(commandBuffer,
         &sbt.raygenRegion,
         &sbt.missRegion,
@@ -60,6 +65,7 @@ void recordCommandBuffer(VkDevice device, VkCommandBuffer commandBuffer, uint32_
         extent.width,
         extent.height,
         1);
+    }
 
     VkImageMemoryBarrier rtImageBarrier{};
     rtImageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -141,6 +147,8 @@ void recordCommandBuffer(VkDevice device, VkCommandBuffer commandBuffer, uint32_
         0, nullptr,
         1, &swapChainBarrier
     );
+
+    TracyVkCollect(tracyContext, commandBuffer);
 
     vkEndCommandBuffer(commandBuffer);
 }
